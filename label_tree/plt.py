@@ -37,9 +37,9 @@ class PLTClassifier(BaseEstimator):
 
     def fit(self, X: Union[np.ndarray, csr_matrix], y: Union[np.ndarray, csr_matrix]) -> PLTClassifier:
         self.yi_shape_ = y[0].shape
-        self.tree_ = self.__create_huffman_tree(y)
-        self.tree_ = self.__assign_train_indices(self.tree_, y)
-        self.tree_ = self.__fit_tree(self.tree_, X)
+        self.tree_ = self._create_huffman_tree(y)
+        self.tree_ = self._assign_train_indices(self.tree_, y)
+        self.tree_ = self._fit_tree(self.tree_, X)
         return self
 
     def predict(self, X: Union[np.ndarray, csr_matrix]) -> csr_matrix:
@@ -55,7 +55,7 @@ class PLTClassifier(BaseEstimator):
         for index, x in enumerate(X):
             if self.verbose:
                 print(f'Predicting sample {index + 1}/{X_length}')
-            y_pred.append(self.__traverse_tree_prediction(self.tree_, x))
+            y_pred.append(self._traverse_tree_prediction(self.tree_, x))
         return csr_matrix(y_pred)
 
     def decision_function(self, X: Union[np.ndarray, csr_matrix]) -> csr_matrix:
@@ -71,7 +71,7 @@ class PLTClassifier(BaseEstimator):
         for index, x in enumerate(X):
             if self.verbose:
                 print(f'Predicting decision for sample {index + 1}/{X_length}')
-            y_pred_decision.append(self.__traverse_tree_decision_function(self.tree_, x))
+            y_pred_decision.append(self._traverse_tree_decision_function(self.tree_, x))
         return csr_matrix(y_pred_decision)
 
     def score(self, X_test, y_test, k=3):
@@ -80,7 +80,7 @@ class PLTClassifier(BaseEstimator):
         y_scores = self.decision_function(X_test)
         return sparse_average_precision_at_k(y_test, y_scores, k=k)
 
-    def __create_huffman_tree(self, y: csr_matrix) -> HuffmanTree:
+    def _create_huffman_tree(self, y: csr_matrix) -> HuffmanTree:
         """
         Create a huffman tree_ based on the given labels and their probabilities.
         :param y: sparse binary representation label vectors
@@ -90,7 +90,7 @@ class PLTClassifier(BaseEstimator):
         if self.verbose:
             print('Building tree_')
 
-        label_probs = self.__compute_label_probabilities(y)
+        label_probs = self._compute_label_probabilities(y)
 
         priority_queue = []
         for label_id, prob in label_probs.items():
@@ -115,7 +115,7 @@ class PLTClassifier(BaseEstimator):
 
         return HuffmanTree(root=priority_queue[0])
 
-    def __assign_train_indices(self, tree: HuffmanTree, y: csr_matrix) -> HuffmanTree:
+    def _assign_train_indices(self, tree: HuffmanTree, y: csr_matrix) -> HuffmanTree:
         """
 
         :param tree:
@@ -134,7 +134,7 @@ class PLTClassifier(BaseEstimator):
 
         return tree
 
-    def __fit_tree(self, tree: HuffmanTree, X: np.ndarray) -> HuffmanTree:
+    def _fit_tree(self, tree: HuffmanTree, X: np.ndarray) -> HuffmanTree:
         """
         Fits the tree_.
         The tree_ is traversed in a breath-first style and the classifier at each not is fitted
@@ -164,7 +164,7 @@ class PLTClassifier(BaseEstimator):
                      enumerate(list(tree.bfs_traverse())))
         return tree
 
-    def __traverse_tree_prediction(self, tree: HuffmanTree, x: np.ndarray) -> np.ndarray:
+    def _traverse_tree_prediction(self, tree: HuffmanTree, x: np.ndarray) -> np.ndarray:
         """
         Traverses the given label tree_ with a single feature instance to predict (in a depth-first manner).
         At each node the decision of whether continuing to the nodes children or this subtree is made.
@@ -202,7 +202,7 @@ class PLTClassifier(BaseEstimator):
 
         return yi_vector.astype('int8').ravel()
 
-    def __traverse_tree_decision_function(self, tree: HuffmanTree, x: np.ndarray) -> np.ndarray:
+    def _traverse_tree_decision_function(self, tree: HuffmanTree, x: np.ndarray) -> np.ndarray:
 
         yi_pred = []
         yi_prob = []
@@ -230,7 +230,7 @@ class PLTClassifier(BaseEstimator):
         yi_vector[0, yi_pred] = yi_prob
         return yi_vector.astype('float').ravel()
 
-    def __compute_label_probabilities(self, y: Union[np.ndarray, csr_matrix]) -> Dict[int, float]:
+    def _compute_label_probabilities(self, y: Union[np.ndarray, csr_matrix]) -> Dict[int, float]:
         """
         Computes the label probabilities e.g. the relative frequencies.
         :param y:
