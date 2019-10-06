@@ -39,6 +39,7 @@ class HuffmanNode:
             self.clf.fit(X, y).sparsify()
             self.fitted = True
         except ValueError as e:
+            # TODO
             raise Exception(f'Could not fit node {self}.\n'
                             f'This  either happens if there are labels in the dataset\n'
                             f'which are never assigned to a instance or assigned to all instances.\n'
@@ -46,7 +47,7 @@ class HuffmanNode:
                             f'together which are together assigned to all instances\n'
                             f'For the first case you could the prune_labels function to filter these labels.\n'
                             f'For second case there is currently no built in solution.\n'
-                            f'Note: If you encounter this your dataset is very unlikely to at be at xmlc scale.\n')  # TODO
+                            f'Note: If you encounter this your dataset is very unlikely to at be at xmlc scale.\n')
 
     def clf_predict_proba(self, X: Union[np.ndarray, csr_matrix]) -> np.ndarray:
         self.visited_while_prediction += 1
@@ -77,8 +78,9 @@ class HuffmanTree:
     def __init__(self, root: HuffmanNode):
         self.root = root
 
-    def dfs_traverse(self, start_node: HuffmanNode = None, yield_start_node: bool = False) -> Generator[
-        HuffmanNode, None, None]:
+    def dfs_traverse(self,
+                     start_node: HuffmanNode = None,
+                     yield_start_node: bool = False) -> Generator[HuffmanNode, None, None]:
 
         if not start_node:
             start_node = self.root
@@ -92,8 +94,10 @@ class HuffmanTree:
             if not current_node.is_leaf():
                 fifo.extendleft(current_node.get_children())
 
-    def bfs_traverse(self, start_node: HuffmanNode = None, yield_start_node: bool = False) -> Generator[
-        HuffmanNode, None, None]:
+    def bfs_traverse(self,
+                     start_node: HuffmanNode = None,
+                     yield_start_node: bool = False) -> Generator[HuffmanNode, None, None]:
+
         if not start_node:
             start_node = self.root
         if yield_start_node:

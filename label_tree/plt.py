@@ -46,7 +46,7 @@ class PLTClassifier(BaseEstimator):
         :return:
         """
         self.yi_shape_ = y[0].shape
-        self.tree_ = self._create_huffman_tree(y)
+        self.tree_ = self._create_huffman_tree(y, k=self.num_children)
         self.tree_ = self._assign_train_indices(self.tree_, y)
         self.tree_ = self._fit_tree(self.tree_, X)
         return self
@@ -96,7 +96,7 @@ class PLTClassifier(BaseEstimator):
         y_scores = self.decision_function(X_test)
         return sparse_average_precision_at_k(y_test, y_scores, k=k)
 
-    def _create_huffman_tree(self, y: csr_matrix) -> HuffmanTree:
+    def _create_huffman_tree(self, y: csr_matrix, k: int) -> HuffmanTree:
         """
         Create a huffman tree_ based on the given labels and their probabilities.
         :param y: sparse binary representation label vectors
@@ -118,7 +118,7 @@ class PLTClassifier(BaseEstimator):
         heapify(priority_queue)
 
         while len(priority_queue) > 1:
-            n_children = [heappop(priority_queue) for _ in range(min(self.num_children, len(priority_queue)))]
+            n_children = [heappop(priority_queue) for _ in range(min(k, len(priority_queue)))]
             new_node = HuffmanNode(probability=sum(map(lambda node: node.probability, n_children)),
                                    clf=clone_estimator(self.node_clf),
                                    label_idx=list(chain.from_iterable(map(lambda node: node.label_idx, n_children))),
@@ -248,9 +248,9 @@ class PLTClassifier(BaseEstimator):
 
     def _compute_label_probabilities(self, y: Union[np.ndarray, csr_matrix]) -> Dict[int, float]:
         """
-        Computes the label probabilities e.g. the relative frequencies.
-        :param y:
-        :return:
+        Computes the label probabilities e.g. their relative frequencies.
+        :param y: label in binary representation
+        :return: dict with the label indices as keys and their probabilities as values
         """
         label_probs = {}
         total_no_tags = np.nonzero(y)[0].shape[0]

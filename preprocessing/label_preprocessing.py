@@ -16,7 +16,7 @@ def prune_labels(y_train: Union[csr_matrix],
     :return:
     """
 
-    if X.shape[0] != y.shape[0]:
+    if y_train.shape[1] != y_test.shape[1]:
         raise Exception('X and y must have same shape')
 
 
