@@ -210,7 +210,8 @@ class PLTClassifier(BaseEstimator):
                 fifo.extendleft(((children, pr) for children, pr in zip(current_node.get_children(), repeat(prob))))
 
             if current_node.is_leaf():
-                assert len(current_node.label_idx) == 1, Exception('Leaf node has more than one label associated.')
+                if len(current_node.label_idx) != 1:
+                    raise Exception('Leaf node has more than one label associated.')
                 yi_pred.append(current_node.label_idx[0])
 
         yi_vector = np.zeros(self.yi_shape_)
