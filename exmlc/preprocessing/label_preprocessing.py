@@ -1,6 +1,9 @@
+import warnings
 from typing import *
 
 from scipy.sparse import csr_matrix
+from sklearn.base import TransformerMixin
+from sklearn.exceptions import NotFittedError
 
 
 def prune_labels(y_train: Union[csr_matrix],
@@ -39,11 +42,6 @@ def prune_labels(y_train: Union[csr_matrix],
         print(f'Dropped {len(label_idx_to_remove)} labels because they occur less than {threshold} times.')
 
     return y_train.tocsr(), y_test.tocsr(), label_idx_to_remove
-
-
-from sklearn.base import TransformerMixin
-from sklearn.exceptions import NotFittedError
-import warnings
 
 
 class MultiLabelIndexer(TransformerMixin):
