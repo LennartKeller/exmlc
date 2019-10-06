@@ -1,7 +1,9 @@
 from __future__ import annotations
-from typing import *
-from scipy.sparse import csr_matrix, lil_matrix
+
 from io import TextIOWrapper
+from typing import *
+
+from scipy.sparse import csr_matrix, lil_matrix
 
 
 def load_fastxml_score_file(f: Union[str, TextIOWrapper]) -> csr_matrix:

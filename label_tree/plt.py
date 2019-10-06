@@ -1,19 +1,22 @@
 from __future__ import annotations
-from sklearn.base import BaseEstimator
-from sklearn.linear_model.base import LinearClassifierMixin
-from sklearn.linear_model import SGDClassifier
+
+from collections import deque
+from functools import partial
+from heapq import heappop, heapify, heappush
+from itertools import chain, repeat
+from multiprocessing.dummy import Pool
 from typing import *
-from scipy.sparse import csr_matrix
+
 import numpy as np
+from scipy.sparse import csr_matrix
+from sklearn.base import BaseEstimator
+from sklearn.base import clone as clone_estimator
 from sklearn.exceptions import NotFittedError
+from sklearn.linear_model import SGDClassifier
+from sklearn.linear_model.base import LinearClassifierMixin
+
 from .tree import HuffmanNode, HuffmanTree
 from ..metrics import sparse_average_precision_at_k
-from heapq import heappop, heapify, heappush
-from sklearn.base import clone as clone_estimator
-from collections import deque
-from multiprocessing.dummy import Pool
-from itertools import chain, repeat
-from functools import partial
 
 
 class PLTClassifier(BaseEstimator):

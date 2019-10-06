@@ -1,9 +1,11 @@
 from __future__ import annotations
-from typing import *
-from sklearn.linear_model.base import LinearClassifierMixin
-from scipy.sparse import csr_matrix
-import numpy as np
+
 from collections import deque
+from typing import *
+
+import numpy as np
+from scipy.sparse import csr_matrix
+from sklearn.linear_model.base import LinearClassifierMixin
 
 
 class HuffmanNode:
