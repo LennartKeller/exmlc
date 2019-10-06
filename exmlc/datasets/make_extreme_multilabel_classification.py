@@ -1,7 +1,8 @@
-from sklearn.datasets import make_multilabel_classification
 from typing import *
-from scipy.sparse import csr_matrix
+
 from numpy import array
+from scipy.sparse import csr_matrix
+from sklearn.datasets import make_multilabel_classification
 
 
 def make_extreme_multilabel_classification(n_samples=10000,
@@ -29,4 +30,4 @@ def make_extreme_multilabel_classification(n_samples=10000,
     (p_c as array (probability of each class being drawn),
     p_w_c as array (probability of each feature being drawn given each class.))
     """
-    return make_multilabel_classification(**locals())
+    return make_multilabel_classification(sparse=True, return_indicator='sparse', **locals())
