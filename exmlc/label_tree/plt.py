@@ -76,7 +76,7 @@ class PLTClassifier(BaseEstimator):
         :param X:
         :return:
         """
-        if not self.tree_:
+        if not hasattr(self, 'tree_'):
             raise NotFittedError
         y_pred_decision = []
         X_length = X.shape[0]
