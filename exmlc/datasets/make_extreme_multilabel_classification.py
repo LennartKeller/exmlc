@@ -5,9 +5,9 @@ from scipy.sparse import csr_matrix
 from sklearn.datasets import make_multilabel_classification
 
 
-def make_extreme_multilabel_classification(n_samples=10000,
+def make_extreme_multilabel_classification(n_samples=5000,
                                            n_features=20,
-                                           n_labels=500,
+                                           n_labels=200,
                                            allow_unlabeled=False,
                                            return_distributions=False,
                                            random_state=None) -> Tuple[csr_matrix, csr_matrix,
