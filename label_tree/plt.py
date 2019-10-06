@@ -36,6 +36,12 @@ class PLTClassifier(BaseEstimator):
         self.verbose = verbose
 
     def fit(self, X: Union[np.ndarray, csr_matrix], y: Union[np.ndarray, csr_matrix]) -> PLTClassifier:
+        """
+        TODO
+        :param X:
+        :param y:
+        :return:
+        """
         self.yi_shape_ = y[0].shape
         self.tree_ = self._create_huffman_tree(y)
         self.tree_ = self._assign_train_indices(self.tree_, y)
@@ -44,7 +50,7 @@ class PLTClassifier(BaseEstimator):
 
     def predict(self, X: Union[np.ndarray, csr_matrix]) -> csr_matrix:
         """
-
+        TODO
         :param X:
         :return:
         """
@@ -74,7 +80,14 @@ class PLTClassifier(BaseEstimator):
             y_pred_decision.append(self._traverse_tree_decision_function(self.tree_, x))
         return csr_matrix(y_pred_decision)
 
-    def score(self, X_test, y_test, k=3):
+    def score(self, X_test: csr_matrix, y_test: csr_matrix, k: int = 3) -> float:
+        """
+        TODO
+        :param X_test:
+        :param y_test:
+        :param k:
+        :return:
+        """
         if not self.tree_:
             raise NotFittedError
         y_scores = self.decision_function(X_test)
