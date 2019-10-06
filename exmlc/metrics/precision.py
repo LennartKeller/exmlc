@@ -47,7 +47,7 @@ def sparse_average_precision_at_k(y_true: csr_matrix, y_scores: csr_matrix, k: i
     summed_precision = []
 
     for index, (row, score_row) in enumerate(zip(correct_labelled, y_scores)):
-        # check special case that corresponding y_true row is empty => unlabbelled instance
+        # check special case that corresponding y_true row is empty => unlabeled instance
         if y_true[index].count_nonzero() == 0:
             # if no labels where predicted add 1 to sum
             if score_row.count_nonzero() == 0:

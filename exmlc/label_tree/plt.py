@@ -20,6 +20,9 @@ from ..metrics import sparse_average_precision_at_k
 
 
 class PLTClassifier(BaseEstimator):
+    """
+    TODO docs
+    """
 
     def __init__(self,
                  threshold: float = .005,
