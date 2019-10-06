@@ -1,5 +1,5 @@
-from scipy.sparse import csr_matrix, lil_matrix
 import numpy as np
+from scipy.sparse import csr_matrix, lil_matrix
 
 
 def top_n_idx_sparse(matrix: csr_matrix, n: int) -> np.ndarray:
