@@ -1,1 +1,2 @@
-from .exmlc_repo import *
+from .exmlc_repo import load_xmlc_dataset, load_fastxml_score_file, dump_slice_dataset, dump_xmlc_dataset
+from .make_extreme_multilabel_classification import make_extreme_multilabel_classification
