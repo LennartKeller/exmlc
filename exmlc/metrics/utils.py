@@ -16,7 +16,6 @@ def top_n_idx_sparse(matrix: csr_matrix, n: int) -> np.ndarray:
     for le, ri in zip(matrix.indptr[:-1], matrix.indptr[1:]):
         n_row_pick = min(n, ri - le)
         top_idx = matrix.indices[le + np.argpartition(matrix.data[le:ri], -n_row_pick)[-n_row_pick:]]
-        top_idx = top_idx[np.argsort]
         top_n_idx.append(top_idx)
     return np.array(top_n_idx)
 

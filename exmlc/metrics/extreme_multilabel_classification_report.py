@@ -13,8 +13,9 @@ def extreme_multilabel_classification_report(y_true: csr_matrix,
     """
     TODO docs
     1. Precision at k
-    2. nDCG at k
-    3. F1 (macro) score
+    2. DCG at k
+    3. nDCG at k
+    4. F1 (macro) score
     :param y_true:
     :param y_score:
     :param k_range:
@@ -24,7 +25,9 @@ def extreme_multilabel_classification_report(y_true: csr_matrix,
         raise Exception('y_true and y_score must have same dimension')
 
     # init dict
-    result = {}
+    result = dict()
+    result['precision@k'] = {}
+    result['dcg@k'] = {}
 
     # precision at k
     for k in k_range:
