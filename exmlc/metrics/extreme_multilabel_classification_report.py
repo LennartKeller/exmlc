@@ -21,8 +21,9 @@ def extreme_multilabel_classification_report(y_true: csr_matrix,
     :param k_range:
     :return:
     """
-    if y_true.shape != y_score.shape:
-        raise Exception('y_true and y_score must have same dimension')
+    # TODO use sklearn function to check dimensions
+    #if y_true.shape != y_score.shape:
+    #    raise Exception('y_true and y_score must have same dimension')
 
     # init dict
     result = dict()
