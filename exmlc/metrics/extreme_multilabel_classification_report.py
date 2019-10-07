@@ -4,6 +4,7 @@ from scipy.sparse import csr_matrix, lil_matrix
 from sklearn.metrics import f1_score
 
 from .precision import sparse_average_precision_at_k
+from .dcg import average_discounted_cumulative_gain_at_k
 
 
 def extreme_multilabel_classification_report(y_true: csr_matrix,
@@ -27,6 +28,7 @@ def extreme_multilabel_classification_report(y_true: csr_matrix,
     # precision at k
     for k in k_range:
         result['precision@k'][str(k)] = sparse_average_precision_at_k(y_true, y_score, k=k)
+        result['dcg@k'] [str(k)] = average_discounted_cumulative_gain_at_k(y_true, y_score)
 
     # TODO nDCG
 
