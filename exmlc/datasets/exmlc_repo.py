@@ -104,8 +104,6 @@ def dump_xmlc_dataset(X: csr_matrix, y: csr_matrix, f: Union[str, TextIOWrapper]
     else:
         raise TypeError(f'f is type {type(f)} but should be either str or StringIo')
 
-    if X.shape[0] != y.shape[0]:
-        raise Exception('X and y must have same shape')
 
     # create and write header
     header = f'{X.shape[0]} {X.shape[1]} {y.shape[1]}\n'
