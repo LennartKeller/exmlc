@@ -23,12 +23,13 @@ def extreme_multilabel_classification_report(y_true: csr_matrix,
     if y_true.shape != y_score.shape:
         raise Exception('y_true and y_score must have same dimension')
 
+    # init dict
     result = {}
 
     # precision at k
     for k in k_range:
         result['precision@k'][str(k)] = sparse_average_precision_at_k(y_true, y_score, k=k)
-        result['dcg@k'] [str(k)] = average_discounted_cumulative_gain_at_k(y_true, y_score)
+        result['dcg@k'][str(k)] = average_discounted_cumulative_gain_at_k(y_true, y_score, k=k)
 
     # TODO nDCG
 
