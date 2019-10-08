@@ -29,6 +29,8 @@ def load_fastxml_score_file(f: Union[str, TextIOWrapper]) -> csr_matrix:
             label_index, value = entry.split(':')
             y_scores[row_index, int(label_index)] = float(value)
 
+    file.close()
+
     return y_scores.tocsr()
 
 
@@ -69,6 +71,8 @@ def dump_slice_dataset(X: csr_matrix,
         line = f'{" ".join([f"{label_id}:1" for label_id in map(str, label_idx)])}\n'
         label_file.write(line)
 
+    label_file.close()
+
     # 2. create dense feature file
     # format:
     # The first line of both the files contains the number of rows
@@ -81,6 +85,9 @@ def dump_slice_dataset(X: csr_matrix,
     for feature_vector in X:
         line = f'{" ".join(map(str, [i if i > 0.0 else int(0) for i in feature_vector[0].toarray().ravel()]))}\n'
         feat_file.write(line)
+
+    feat_file.close()
+
     return
 
 
@@ -117,6 +124,9 @@ def dump_xmlc_dataset(X: csr_matrix, y: csr_matrix, f: Union[str, TextIOWrapper]
         features = " ".join(features)
 
         file.write(f'{" ".join((labels, features))}\n')
+
+    file.close()
+
     return
 
 
@@ -158,5 +168,7 @@ def load_xmlc_dataset(f: Union[str, TextIOWrapper]) -> Tuple[csr_matrix, csr_mat
             feature_index, feature_value = entry.split(':')
             feature_index, feature_value = int(feature_index), float(feature_value)
             X[row_index, feature_index] = feature_value
+
+    file.close()
 
     return X.tocsr(), y.tocsr()

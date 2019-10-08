@@ -37,6 +37,9 @@ def clean_string(x: string, drop_stopwords: bool = True) -> str:
     marks_to_remove = string.punctuation + "„“–’"
 
     if x:
+
+        x = x.lower()
+
         for key in removal_regex:
             x = re.sub(key, removal_regex[key], x)
         # remove punctuation marks
