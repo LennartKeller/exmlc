@@ -58,7 +58,7 @@ def discounted_culmulative_gain_at_k(y_true: csr_matrix, y_scores: csr_matrix, k
     return np.divide(dcg, k)
 
 
-def avg_dcg_at_k(y_true: csr_matrix, y_scores: csr_matrix, k: int = 3, normalize: bool = False):
+def avg_dcg_at_k(y_true: csr_matrix, y_scores: csr_matrix, k: int = 3, normalize: bool = False) -> float:
     if normalize:
         raise NotImplementedError
 
