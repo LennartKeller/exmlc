@@ -1,5 +1,8 @@
+from __future__ import annotations
+
 import warnings
 from typing import *
+import numpy as np
 
 from scipy.sparse import csr_matrix
 from sklearn.base import TransformerMixin
@@ -46,7 +49,7 @@ def prune_labels(y_train: Union[csr_matrix],
 
 class MultiLabelIndexer(TransformerMixin):
 
-    def fit(self, X, y=None):
+    def fit(self, X: List[List[str]], y=None) -> MultiLabelIndexer:
         label_set = set()
         for entry in X:
             for label in entry:
@@ -57,7 +60,8 @@ class MultiLabelIndexer(TransformerMixin):
 
         return self
 
-    def transform(self, X, y=None):
+    def transform(self, X: List[List[str]], y=None) -> List[List[int]]:
+
         if not hasattr(self, 'classes_'):
             raise NotFittedError
 
@@ -83,11 +87,11 @@ class MultiLabelIndexer(TransformerMixin):
 
         return X_t
 
-    def fit_transform(self, X, y=None):
+    def fit_transform(self, X: List[List[str]], y=None, **fit_params) -> List[List[int]]:
         self.fit(X)
         return self.transform(X)
 
-    def inverse_transform(self, X, y=None):
+    def inverse_transform(self, X: List[List[int]], y=None) -> List[List[str]]:
         X_inv = []
         for entry in X:
             x_inv = []
@@ -95,3 +99,15 @@ class MultiLabelIndexer(TransformerMixin):
                 x_inv.append(self.classes_[ind])
             X_inv.append(x_inv)
         return X_inv
+
+
+class BinaryToIndexTransformer(TransformerMixin):
+
+    def fit(self, X: Union[np.ndarray, csr_matrix], y=None) -> BinaryToIndexTransformer:
+        return self
+
+    def transform(self, X: Union[np.ndarray, csr_matrix], y=None) -> List[List[int]]:
+        result = []
+        for label_vec in X:
+            result.append(np.nonzero(label_vec)[1].tolist())
+        return result
