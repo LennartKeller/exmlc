@@ -17,7 +17,7 @@ def load_fastxml_score_file(f: Union[str, TextIOWrapper]) -> csr_matrix:
     elif isinstance(f, TextIOWrapper):
         file = f
     else:
-        raise TypeError(f'feature_file is type {type(f)} but should be either str or StringIO')
+        raise TypeError(f'feature_file is type {type(f)} but should be either str or TextIOWrapper')
 
     header = file.readline()
     num_instances, num_labels = map(int, header.split(' '))
@@ -44,14 +44,14 @@ def dump_slice_dataset(X: csr_matrix,
     elif isinstance(feat_file, TextIOWrapper):
         pass
     else:
-        raise TypeError(f'feature_file is type {type(feat_file)} but should be either str or StringIo')
+        raise TypeError(f'feature_file is type {type(feat_file)} but should be either str or TextIOWrapper')
 
     if isinstance(label_file, str):
         label_file = open(label_file, 'w')
     elif isinstance(label_file, TextIOWrapper):
         pass
     else:
-        raise TypeError(f'label_file is type {type(label_file)} but should be either str or StringIo')
+        raise TypeError(f'label_file is type {type(label_file)} but should be either str or TextIOWrapper')
 
     if X.shape[0] != y.shape[0]:
         raise Exception('X and y must have same shape')
@@ -109,7 +109,7 @@ def dump_xmlc_dataset(X: csr_matrix, y: csr_matrix, f: Union[str, TextIOWrapper]
     elif isinstance(f, TextIOWrapper):
         file = f
     else:
-        raise TypeError(f'f is type {type(f)} but should be either str or StringIo')
+        raise TypeError(f'f is type {type(f)} but should be either str or TextIOWrapper')
 
 
     # create and write header
@@ -143,7 +143,7 @@ def load_xmlc_dataset(f: Union[str, TextIOWrapper]) -> Tuple[csr_matrix, csr_mat
     elif isinstance(f, TextIOWrapper):
         file = f
     else:
-        raise TypeError(f'f is type {type(f)} but should be either str or StringIo')
+        raise TypeError(f'f is type {type(f)} but should be either str or TextIOWrapper')
 
     # read header
     header = file.readline()
