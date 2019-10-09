@@ -44,6 +44,7 @@ def extreme_multilabel_classification_report(y_true: csr_matrix,
     # binary_pred = binary_pred.tocsr()
 
     result['f1_marco'] = f1_score(y_true, binary_pred, average='macro')
-    result['label_ranking_average_precision_score'] = label_ranking_average_precision_score(y_true, y_score)
+    result['label_ranking_average_precision_score'] = label_ranking_average_precision_score(y_true.toarray(),
+                                                                                            y_score.toarray())
 
     return result
