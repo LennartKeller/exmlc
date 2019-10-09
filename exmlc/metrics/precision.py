@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.sparse import csr_matrix, lil_matrix
 from .utils import top_n_idx_sparse
-from sklearn.utils import check_X_y
+
 
 def sparse_average_precision_at_k(y_true: csr_matrix, y_scores: csr_matrix, k: int = 5) -> float:
     """
@@ -58,7 +58,7 @@ def precision_at_k(y_true: csr_matrix, y_scores: csr_matrix, k=3) -> float:
     return s / k
 
 
-def average_precision_at_k(y_true: csr_matrix, y_scores: csr_matrix, k=3) -> float:
+def average_precision_at_k(y_true: csr_matrix, y_scores: csr_matrix, k=5) -> float:
     precisions = []
     for true_row, pred_row in zip(y_true, y_scores):
         precisions.append(precision_at_k(true_row, pred_row, k=k))
