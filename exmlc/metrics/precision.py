@@ -50,6 +50,7 @@ def precision_at_k(y_true: csr_matrix, y_scores: csr_matrix, k=3) -> float:
 
     if y_true.shape[0] > 1:
         raise Exception
+
     top_idx = top_n_idx_sparse(y_scores, n=k)[0]
     s = 0
     for ind in top_idx:
