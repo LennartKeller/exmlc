@@ -1,14 +1,15 @@
 from __future__ import annotations
+
+from functools import partial
+from multiprocessing.dummy import Pool
 from os import cpu_count
 from typing import *
-from scipy.sparse import csr_matrix, lil_matrix
-from sklearn.base import BaseEstimator
-from sklearn.base import clone as clone_estimator
-from sklearn.linear_model.base import LinearClassifierMixin
-from sklearn.linear_model import SGDClassifier
+
 import numpy as np
-from multiprocessing.dummy import Pool
-from functools import partial
+from scipy.sparse import csr_matrix
+from sklearn.base import BaseEstimator
+from sklearn.linear_model import SGDClassifier
+from sklearn.linear_model.base import LinearClassifierMixin
 
 
 class OneVsAllLinearClf(BaseEstimator):
@@ -24,15 +25,17 @@ class OneVsAllLinearClf(BaseEstimator):
 
         self.base_clf = clf
         self.sparsify = sparsify
+
         if n_jobs == -1:
             self.n_jobs = cpu_count()
         else:
             self.n_jobs = n_jobs
+            
         self.verbose = verbose
         if not hasattr(self.base_clf, 'predict_proba'):
             delattr(self, 'predict_proba')
 
-    def fit(self, X: Union[csr_matrix, np.ndarray], y:  Union[csr_matrix, np.ndarray]) -> OneVsAllLinearClf:
+    def fit(self, X: Union[csr_matrix, np.ndarray], y: Union[csr_matrix, np.ndarray]) -> OneVsAllLinearClf:
         """
         TODO
         :param X:

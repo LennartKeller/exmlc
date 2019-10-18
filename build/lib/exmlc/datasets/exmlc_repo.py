@@ -17,7 +17,7 @@ def load_fastxml_score_file(f: Union[str, TextIOWrapper]) -> csr_matrix:
     elif isinstance(f, TextIOWrapper):
         file = f
     else:
-        raise TypeError(f'feature_file is type {type(f)} but should be either str or TextIOWrapper')
+        raise TypeError(f'feature_file is type {type(f)} but should be either str or StringIO')
 
     header = file.readline()
     num_instances, num_labels = map(int, header.split(' '))
@@ -29,8 +29,6 @@ def load_fastxml_score_file(f: Union[str, TextIOWrapper]) -> csr_matrix:
             label_index, value = entry.split(':')
             y_scores[row_index, int(label_index)] = float(value)
 
-    file.close()
-
     return y_scores.tocsr()
 
 
@@ -38,19 +36,20 @@ def dump_slice_dataset(X: csr_matrix,
                        y: csr_matrix,
                        feat_file: Union[str, TextIOWrapper],
                        label_file: Union[str, TextIOWrapper]) -> None:
+
     if isinstance(feat_file, str):
         feat_file = open(feat_file, 'w')
     elif isinstance(feat_file, TextIOWrapper):
         pass
     else:
-        raise TypeError(f'feature_file is type {type(feat_file)} but should be either str or TextIOWrapper')
+        raise TypeError(f'feature_file is type {type(feat_file)} but should be either str or StringIo')
 
     if isinstance(label_file, str):
         label_file = open(label_file, 'w')
     elif isinstance(label_file, TextIOWrapper):
         pass
     else:
-        raise TypeError(f'label_file is type {type(label_file)} but should be either str or TextIOWrapper')
+        raise TypeError(f'label_file is type {type(label_file)} but should be either str or StringIo')
 
     if X.shape[0] != y.shape[0]:
         raise Exception('X and y must have same shape')
@@ -70,8 +69,6 @@ def dump_slice_dataset(X: csr_matrix,
         line = f'{" ".join([f"{label_id}:1" for label_id in map(str, label_idx)])}\n'
         label_file.write(line)
 
-    label_file.close()
-
     # 2. create dense feature file
     # format:
     # The first line of both the files contains the number of rows
@@ -84,9 +81,6 @@ def dump_slice_dataset(X: csr_matrix,
     for feature_vector in X:
         line = f'{" ".join(map(str, [i if i > 0.0 else int(0) for i in feature_vector[0].toarray().ravel()]))}\n'
         feat_file.write(line)
-
-    feat_file.close()
-
     return
 
 
@@ -108,7 +102,8 @@ def dump_xmlc_dataset(X: csr_matrix, y: csr_matrix, f: Union[str, TextIOWrapper]
     elif isinstance(f, TextIOWrapper):
         file = f
     else:
-        raise TypeError(f'f is type {type(f)} but should be either str or TextIOWrapper')
+        raise TypeError(f'f is type {type(f)} but should be either str or StringIo')
+
 
     # create and write header
     header = f'{X.shape[0]} {X.shape[1]} {y.shape[1]}\n'
@@ -122,9 +117,6 @@ def dump_xmlc_dataset(X: csr_matrix, y: csr_matrix, f: Union[str, TextIOWrapper]
         features = " ".join(features)
 
         file.write(f'{" ".join((labels, features))}\n')
-
-    file.close()
-
     return
 
 
@@ -141,7 +133,7 @@ def load_xmlc_dataset(f: Union[str, TextIOWrapper]) -> Tuple[csr_matrix, csr_mat
     elif isinstance(f, TextIOWrapper):
         file = f
     else:
-        raise TypeError(f'f is type {type(f)} but should be either str or TextIOWrapper')
+        raise TypeError(f'f is type {type(f)} but should be either str or StringIo')
 
     # read header
     header = file.readline()
@@ -166,7 +158,5 @@ def load_xmlc_dataset(f: Union[str, TextIOWrapper]) -> Tuple[csr_matrix, csr_mat
             feature_index, feature_value = entry.split(':')
             feature_index, feature_value = int(feature_index), float(feature_value)
             X[row_index, feature_index] = feature_value
-
-    file.close()
 
     return X.tocsr(), y.tocsr()

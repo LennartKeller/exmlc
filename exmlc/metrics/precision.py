@@ -1,5 +1,6 @@
 import numpy as np
 from scipy.sparse import csr_matrix, lil_matrix
+
 from .utils import top_n_idx_sparse
 
 
@@ -44,7 +45,6 @@ def sparse_average_precision_at_k(y_true: csr_matrix, y_scores: csr_matrix, k: i
 
 
 def precision_at_k(y_true: csr_matrix, y_scores: csr_matrix, k=3) -> float:
-
     if y_true.shape != y_scores.shape:
         raise Exception
 

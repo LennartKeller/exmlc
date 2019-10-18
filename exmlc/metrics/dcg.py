@@ -1,7 +1,7 @@
-from typing import *
-from scipy.sparse import csr_matrix
-from .utils import get_n_top_values_sorted
 import numpy as np
+from scipy.sparse import csr_matrix
+
+from .utils import get_n_top_values_sorted
 
 
 def average_discounted_cumulative_gain_at_k(y_true: csr_matrix,

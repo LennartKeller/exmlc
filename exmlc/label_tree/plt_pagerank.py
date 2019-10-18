@@ -1,22 +1,22 @@
 from __future__ import annotations
 
-from os import cpu_count
 from collections import deque
 from functools import partial
 from heapq import heappop, heapify, heappush
 from itertools import chain, repeat
 from multiprocessing.dummy import Pool
+from os import cpu_count
 from typing import *
 
-import numpy as np
 import networkx as nx
-from skmultilearn.cluster import LabelCooccurrenceGraphBuilder
+import numpy as np
 from scipy.sparse import csr_matrix
 from sklearn.base import BaseEstimator
 from sklearn.base import clone as clone_estimator
 from sklearn.exceptions import NotFittedError
 from sklearn.linear_model import SGDClassifier
 from sklearn.linear_model.base import LinearClassifierMixin
+from skmultilearn.cluster import LabelCooccurrenceGraphBuilder
 
 from .tree import HuffmanNode, HuffmanTree
 from ..metrics import sparse_average_precision_at_k
