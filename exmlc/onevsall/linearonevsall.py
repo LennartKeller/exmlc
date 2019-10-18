@@ -55,7 +55,7 @@ class OneVsAllLinearClf(BaseEstimator):
         # allocate memory for clfs
         self.clf_store_ = np.full((y.shape[1],), self.base_clf, dtype=np.dtype(LinearClassifierMixin))
 
-        if self.n_jobs <= 1:
+        if self.n_jobs <= 1:  # sequential fitting
             for i in range(self.clf_store_.shape[0]):
                 self.clf_store_[i].fit(X, y.T[i].toarray().ravel())
                 if self.sparsify:
@@ -63,7 +63,7 @@ class OneVsAllLinearClf(BaseEstimator):
 
                 if self.verbose:
                     print(f'Fitting clf {i + 1}/{self.clf_store_.shape[0]}')
-        else:
+        else:  # parallel fitting
             if self.verbose:
                 print(f'Start fitting nodes with {self.n_jobs} workers')
 
@@ -72,14 +72,26 @@ class OneVsAllLinearClf(BaseEstimator):
                         y: csr_matrix,
                         clf_store: np.ndarray,
                         sparsify: bool,
-                        verbose: bool):
-
-                clf_store[index].fit(X, y.T[index].toarray().ravel())
+                        verbose: bool) -> None:
+                """
+                Map function for pool multiprocessing
+                :param index: index of clf to process
+                :param X: train data
+                :param y: binary label vec for one distinct label
+                :param clf_store: array with label clfs
+                :param sparsify: see above
+                :param verbose: see above
+                :return: None
+                """
+                train_vec = y.T[index].toarray().ravel()
+                try:
+                    clf_store[index].fit(X, train_vec)
+                except Exception as e:
+                    print(e)
                 if sparsify:
                     clf_store[index].sparsify()
                 if verbose:
                     print(f'Fitting clf {index + 1}/{clf_store.shape[0]}')
-
                 return
 
             pool = Pool(self.n_jobs)
@@ -89,7 +101,8 @@ class OneVsAllLinearClf(BaseEstimator):
                         sparsify=self.sparsify,
                         clf_store=self.clf_store_,
                         verbose=self.verbose),
-                Array('i', range(self.clf_store_.shape[0]))
+                #Array('i', range(self.clf_store_.shape[0]))
+                list(range(self.clf_store_.shape[0]))
             )
 
         return self
@@ -110,6 +123,8 @@ class OneVsAllLinearClf(BaseEstimator):
         )
 
         for clf_index in range(self.clf_store_.shape[0]):
+            if self.verbose:
+                print(f'Predicting class for label {clf_index}')
             label_predictions = self.clf_store_[clf_index].predict(X)
             y_pred_transposed[clf_index, np.nonzero(label_predictions)] = 1
         return y_pred_transposed.T.tocsr()
@@ -124,11 +139,26 @@ class OneVsAllLinearClf(BaseEstimator):
         # sequential prediction (n_jobs==1)
         y_pred = list()
         for clf_index in range(self.clf_store_.shape[0]):
+            if self.verbose:
+                print(f'Predicting probability for label {clf_index}')
             label_probabilities = self.clf_store_[clf_index].predict_proba(X)
+
+            # filter probs because we're only interested in the prob of the label
             y_pred.append([i[1] for i in label_probabilities])
 
         print(y_pred)
         return np.array(y_pred).T
+
+    def decision_function(self, X: Union[csr_matrix, np.ndarray]) -> np.ndarray:
+        if not hasattr(self, 'clf_store_'):
+            raise NotFittedError
+        y_scores = list()
+        for clf_index in range(self.clf_store_.shape[0]):
+            if self.verbose:
+                print(f'Predicting decision score for label {clf_index}')
+            label_scores = self.clf_store_[clf_index].decision_function(X)
+            y_scores.append(label_scores)
+        return np.array(y_scores).T
 
 
 if __name__ == '__main__':
@@ -136,18 +166,37 @@ if __name__ == '__main__':
 
     from sklearn.datasets import make_multilabel_classification
     from sklearn.model_selection import train_test_split
+    from sklearn.metrics import classification_report
+    from sklearn.linear_model import LogisticRegression
     from exmlc.metrics import sparse_average_precision_at_k
+    from sklearn.svm import LinearSVC
 
-    X, y = make_multilabel_classification(sparse=True, return_indicator='sparse')
-    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=31)
+    X, y = make_multilabel_classification(n_classes=100,
+                                          n_features=1000,
+                                          n_samples=10000,
+                                          sparse=True,
+                                          return_indicator='sparse',
+                                          allow_unlabeled=False,
+                                          random_state=42)
 
-    custom_sgd = SGDClassifier(loss='modified_huber')
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
+
+    custom_sgd = LogisticRegression()
 
     print('Fitting')
-    clf = OneVsAllLinearClf(n_jobs=1, verbose=True)
+    clf = OneVsAllLinearClf(n_jobs=-1, verbose=True)
     clf.fit(X_train, y_train)
 
     print('Predicting')
-    y_pred = clf.predict_proba(X_test)
+    y_pred = clf.predict(X_test)
 
-    print(sparse_average_precision_at_k(y_test, csr_matrix(y_pred)))
+    print(classification_report(y_test, y_pred))
+
+    print('#' * 100)
+    print('Using nonlinear clf')
+
+    clfnl = OneVsAllLinearClf(clf=LinearSVC(), n_jobs=-1, sparsify=False, verbose=True)
+    clfnl.fit(X_train, y_train)
+    y_prednl = clfnl.decision_function(X_test)
+
+    print(sparse_average_precision_at_k(y_test, csr_matrix(y_prednl)))
