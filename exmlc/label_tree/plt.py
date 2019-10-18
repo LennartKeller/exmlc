@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from os import cpu_count
 from collections import deque
 from functools import partial
 from heapq import heappop, heapify, heappush
@@ -38,7 +39,10 @@ class PLTClassifier(BaseEstimator):
         self.threshold = threshold
         self.node_clf = node_clf
         self.num_children = num_children
-        self.n_jobs = n_jobs
+        if n_jobs == -1:
+            self.n_jobs = cpu_count()
+        else:
+            self.n_jobs = n_jobs
         self.verbose = verbose
 
     def fit(self, X: Union[np.ndarray, csr_matrix], y: Union[np.ndarray, csr_matrix]) -> PLTClassifier:
