@@ -143,9 +143,8 @@ if __name__ == '__main__':
 
     custom_sgd = SGDClassifier(loss='modified_huber')
 
-
     print('Fitting')
-    clf = OneVsAllLinearClf(clf=custom_sgd, n_jobs=1, verbose=True)
+    clf = OneVsAllLinearClf(n_jobs=1, verbose=True)
     clf.fit(X_train, y_train)
 
     print('Predicting')
