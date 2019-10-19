@@ -8,7 +8,7 @@ setup(
             'scipy',
             'numpy',
             'networkx',
-            'scikit-learn'
+            'scikit-learn', 'joblib'
       ],
       license='LICENSE'
 )

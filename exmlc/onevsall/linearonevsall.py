@@ -12,7 +12,7 @@ from sklearn.exceptions import NotFittedError
 from sklearn.linear_model import SGDClassifier
 from sklearn.linear_model.base import LinearClassifierMixin
 from sklearn.utils import check_X_y
-
+from joblib import Parallel, delayed
 
 class OneVsAllLinearClf(BaseEstimator):
     """
@@ -83,28 +83,33 @@ class OneVsAllLinearClf(BaseEstimator):
                 :param verbose: see above
                 :return: None
                 """
-                train_vec = y.T[index].toarray().ravel()
-                try:
-                    clf_store[index].fit(X, train_vec)
-                except Exception as e:
-                    print(e)
+
+                train_vec = y.T[index].toarray().ravel().copy()
+
+                clf_store[index].fit(X, train_vec)
+
                 if sparsify:
                     clf_store[index].sparsify()
                 if verbose:
                     print(f'Fitting clf {index + 1}/{clf_store.shape[0]}')
-                return
+                return clf_store[index]
 
-            pool = Pool(self.n_jobs)
-            pool.map(
-                partial(fit_clf,
-                        X=X, y=y,
-                        sparsify=self.sparsify,
-                        clf_store=self.clf_store_,
-                        verbose=self.verbose),
-                #Array('i', range(self.clf_store_.shape[0]))
-                list(range(self.clf_store_.shape[0]))
+            # pool = Pool(self.n_jobs)
+            # pool.map(
+            #     partial(fit_clf,
+            #             X=X.copy(), y=y.copy(),
+            #             sparsify=self.sparsify,
+            #             clf_store=self.clf_store_,
+            #             verbose=self.verbose),
+            #     #Array('i', list(range(self.clf_store_.shape[0])))
+            #     range(self.clf_store_.shape[0])
+            # )
+
+            parallel = Parallel(self.n_jobs)
+            results = parallel(
+                delayed(fit_clf)(clf_index, X, y, self.clf_store_, self.sparsify, self.verbose) for clf_index in list(range(self.clf_store_.shape[0]))
             )
-
+            self.clf_store_ = np.array(results)
         return self
 
     def predict(self, X: Union[np.ndarray, csr_matrix]) -> csr_matrix:
