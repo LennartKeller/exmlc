@@ -15,6 +15,7 @@ def prune_labels(y_train: Union[csr_matrix],
                  verbose=False) -> Tuple[csr_matrix, csr_matrix, list]:
     """
     Deletes all labels in train and test set which occur less often in the train set then the given threshold.
+    With no specified threshold removes labels which do not occur in train_set
     :param y_train:
     :param y_test:
     :param threshold:

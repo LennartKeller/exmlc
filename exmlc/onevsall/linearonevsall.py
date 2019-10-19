@@ -13,6 +13,8 @@ from sklearn.linear_model import SGDClassifier
 from sklearn.linear_model.base import LinearClassifierMixin
 from sklearn.utils import check_X_y
 from joblib import Parallel, delayed
+from logging import Logger
+
 
 class OneVsAllLinearClf(BaseEstimator):
     """
@@ -34,6 +36,7 @@ class OneVsAllLinearClf(BaseEstimator):
             self.n_jobs = n_jobs
 
         self.verbose = verbose
+        self.logger = Logger()
 
     def fit(self, X: Union[csr_matrix, np.ndarray], y: csr_matrix) -> OneVsAllLinearClf:
         """
@@ -72,7 +75,8 @@ class OneVsAllLinearClf(BaseEstimator):
                         y: csr_matrix,
                         clf_store: np.ndarray,
                         sparsify: bool,
-                        verbose: bool) -> None:
+                        verbose: bool,
+                        logger: Logger) -> None:
                 """
                 Map function for pool multiprocessing
                 :param index: index of clf to process
@@ -91,7 +95,7 @@ class OneVsAllLinearClf(BaseEstimator):
                 if sparsify:
                     clf_store[index].sparsify()
                 if verbose:
-                    print(f'Fitting clf {index + 1}/{clf_store.shape[0]}')
+                    logger.info(f'Fitting clf {index + 1}/{clf_store.shape[0]}')
                 return clf_store[index]
 
             # pool = Pool(self.n_jobs)
@@ -107,7 +111,13 @@ class OneVsAllLinearClf(BaseEstimator):
 
             parallel = Parallel(self.n_jobs)
             results = parallel(
-                delayed(fit_clf)(clf_index, X, y, self.clf_store_, self.sparsify, self.verbose) for clf_index in list(range(self.clf_store_.shape[0]))
+                delayed(fit_clf)(clf_index,
+                                 X,
+                                 y,
+                                 self.clf_store_,
+                                 self.sparsify,
+                                 self.verbose,
+                                 self.logger) for clf_index in list(range(self.clf_store_.shape[0]))
             )
             self.clf_store_ = np.array(results)
         return self
