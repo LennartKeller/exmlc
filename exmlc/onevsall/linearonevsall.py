@@ -53,7 +53,7 @@ class OneVsAllLinearClf(BaseEstimator):
             raise Exception('y has to be sparse')
 
         if self.verbose:
-            print('Init classifiers')
+            print(f'Init {y.shape[1]}classifiers')
 
         # allocate memory for clfs
         self.clf_store_ = np.full((y.shape[1],), self.base_clf, dtype=np.dtype(LinearClassifierMixin))
@@ -68,7 +68,7 @@ class OneVsAllLinearClf(BaseEstimator):
                     print(f'Fitting clf {i + 1}/{self.clf_store_.shape[0]}')
         else:  # parallel fitting
             if self.verbose:
-                print(f'Start fitting nodes with {self.n_jobs} workers')
+                print(f'Start fitting with {self.n_jobs} workers')
 
             def fit_clf(index: int,
                         X: Union[csr_matrix, np.ndarray],
