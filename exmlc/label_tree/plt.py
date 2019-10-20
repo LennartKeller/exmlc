@@ -91,12 +91,8 @@ class PLTClassifier(BaseEstimator):
         if not hasattr(self, 'tree_'):
             raise NotFittedError
         y_pred_decision = []
-        X_length = X.shape[0]
         for index, x in enumerate(X):
-            if self.use_probs:
-                y_pred_decision.append(self._traverse_tree_decision_function(self.tree_, x))
-            else:
-                raise NotImplementedError('Implement usage of decision function')
+            y_pred_decision.append(self._traverse_tree_decision_function(self.tree_, x))
         return csr_matrix(y_pred_decision)
 
     def score(self, X_test: csr_matrix, y_test: csr_matrix, k: int = 3) -> float:
@@ -248,18 +244,21 @@ class PLTClassifier(BaseEstimator):
         while fifo:
             current_node, prev_prob = fifo.popleft()
 
-            prob = current_node.clf_predict_proba(x).ravel()[1]
-            if prob * prev_prob < self.threshold:
+            decision_score = current_node.decision_function(x)
+            if decision_score * prev_prob < self.threshold:
                 continue
 
-            new_prev_prob = prob * prev_prob
+            new_prev_prob = decision_score * prev_prob
             if not current_node.is_leaf():
                 fifo.extendleft(((children, pr) for children, pr in zip(current_node.get_children(), repeat(prob))))
 
             if current_node.is_leaf():
                 assert len(current_node.label_idx) == 1, Exception('Leaf node has more than one label associated.')
                 yi_pred.append(current_node.label_idx[0])
-                yi_prob.append(prob)
+                if decision_score > 0:  # e.g. if sample contains to the label
+                    yi_prob.append(decision_score)
+                else:
+                    yi_prob.append(0.0)
 
         yi_vector = np.zeros(self.yi_shape_)
         yi_vector[0, yi_pred] = yi_prob
