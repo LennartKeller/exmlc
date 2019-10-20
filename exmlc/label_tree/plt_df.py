@@ -18,8 +18,10 @@ from sklearn.linear_model.base import LinearClassifierMixin
 
 from .tree import HuffmanNode, HuffmanTree
 from ..metrics import sparse_average_precision_at_k
-from tqdm import tqdm
 
+######
+# Version of plt using decision function for enabling the use of more clfs.
+######
 class PLTClassifier(BaseEstimator):
     """
     TODO docs
@@ -33,14 +35,12 @@ class PLTClassifier(BaseEstimator):
                                                                  loss='modified_huber',
                                                                  penalty='l1'),
                  num_children: int = 2,
-                 use_probs: bool = True,
                  n_jobs: int = 1,
                  verbose: bool = True) -> None:
 
         self.threshold = threshold
         self.node_clf = node_clf
         self.num_children = num_children
-        self.use_probs = use_probs
         if n_jobs == -1:
             self.n_jobs = cpu_count()
         else:
@@ -70,15 +70,9 @@ class PLTClassifier(BaseEstimator):
             raise NotFittedError
         y_pred = []
         X_length = X.shape[0]
-        if self.verbose:
-            data_iterator = tqdm(enumerate(X))
-        else:
-            data_iterator = enumerate(X)
-        if self.verbose:
-            print('Predicting samples')
-        for index, x in data_iterator:
-            # if self.verbose:
-            #     print(f'Predicting sample {index + 1}/{X_length}')
+        for index, x in enumerate(X):
+            if self.verbose:
+                print(f'Predicting sample {index + 1}/{X_length}')
             y_pred.append(self._traverse_tree_prediction(self.tree_, x))
         return csr_matrix(y_pred)
 
@@ -95,10 +89,7 @@ class PLTClassifier(BaseEstimator):
         for index, x in enumerate(X):
             if self.verbose:
                 print(f'Predicting decision for sample {index + 1}/{X_length}')
-            if self.use_probs:
-                y_pred_decision.append(self._traverse_tree_decision_function(self.tree_, x))
-            else:
-                raise NotImplementedError('Implement usage of decision function')
+            y_pred_decision.append(self._traverse_tree_decision_function(self.tree_, x))
         return csr_matrix(y_pred_decision)
 
     def score(self, X_test: csr_matrix, y_test: csr_matrix, k: int = 3) -> float:
