@@ -93,8 +93,6 @@ class PLTClassifier(BaseEstimator):
         y_pred_decision = []
         X_length = X.shape[0]
         for index, x in enumerate(X):
-            if self.verbose:
-                print(f'Predicting decision for sample {index + 1}/{X_length}')
             if self.use_probs:
                 y_pred_decision.append(self._traverse_tree_decision_function(self.tree_, x))
             else:
@@ -187,15 +185,17 @@ class PLTClassifier(BaseEstimator):
             if self.verbose:
                 print(f'Start fitting nodes with {self.n_jobs} workers')
 
-            def fit_node(index_node, degree_tree, verbose):
+            def fit_node(index_node):
                 i, n = index_node
                 n.fit_clf(X, n.y)
-                if verbose:
-                    print(f'Fitting node {i}/{degree_tree}')
 
             pool = Pool(self.n_jobs)
-            pool.map(partial(fit_node, degree_tree=degree_tree, verbose=self.verbose),
-                     enumerate(list(tree.bfs_traverse())))
+            if self.verbose:
+                pool.map(fit_node,
+                         tqdm(enumerate(list(tree.bfs_traverse()))))
+            else:
+                pool.map(fit_node,
+                         enumerate(list(tree.bfs_traverse())))
         return tree
 
     def _traverse_tree_prediction(self, tree: HuffmanTree, x: np.ndarray) -> np.ndarray:
