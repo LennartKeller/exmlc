@@ -140,9 +140,13 @@ class OneVsAllLinearClf(BaseEstimator):
             dtype='int8'
         )
 
-        for clf_index in range(self.clf_store_.shape[0]):
-            if self.verbose:
-                print(f'Predicting class for label {clf_index}')
+        if self.verbose:
+            label_iterator = tqdm(range(self.clf_store_.shape[0]))
+            print('Predicting labels')
+        else:
+            label_iterator = range(self.clf_store_.shape[0])
+
+        for clf_index in label_iterator:
             label_predictions = self.clf_store_[clf_index].predict(X)
             y_pred_transposed[clf_index, np.nonzero(label_predictions)] = 1
         return y_pred_transposed.T.tocsr()
@@ -155,27 +159,38 @@ class OneVsAllLinearClf(BaseEstimator):
         if not hasattr(self, 'clf_store_'):
             raise NotFittedError
         # sequential prediction (n_jobs==1)
+
         y_pred = list()
-        for clf_index in range(self.clf_store_.shape[0]):
-            if self.verbose:
-                print(f'Predicting probability for label {clf_index}')
+
+        if self.verbose:
+            label_iterator = tqdm(range(self.clf_store_.shape[0]))
+            print('Predicting labels probabilities')
+        else:
+            label_iterator = range(self.clf_store_.shape[0])
+        for clf_index in label_iterator:
             label_probabilities = self.clf_store_[clf_index].predict_proba(X)
 
             # filter probs because we're only interested in the prob of the label
             y_pred.append([i[1] for i in label_probabilities])
 
-        print(y_pred)
         return np.array(y_pred).T
 
     def decision_function(self, X: Union[csr_matrix, np.ndarray]) -> np.ndarray:
         if not hasattr(self, 'clf_store_'):
             raise NotFittedError
+
         y_scores = list()
-        for clf_index in range(self.clf_store_.shape[0]):
-            if self.verbose:
-                print(f'Predicting decision score for label {clf_index}')
+
+        if self.verbose:
+            label_iterator = tqdm(range(self.clf_store_.shape[0]))
+            print('Predicting label scores')
+        else:
+            label_iterator = range(self.clf_store_.shape[0])
+
+        for clf_index in label_iterator:
             label_scores = self.clf_store_[clf_index].decision_function(X)
             y_scores.append(label_scores)
+
         return np.array(y_scores).T
 
 
