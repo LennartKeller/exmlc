@@ -7,7 +7,8 @@ from sklearn.datasets import make_multilabel_classification
 
 def make_extreme_multilabel_classification(n_samples=10000,
                                            n_features=5000,
-                                           n_labels=100,
+                                           n_classes=100,
+                                           n_labels=5,
                                            allow_unlabeled=False,
                                            return_distributions=False,
                                            random_state=None) -> Tuple[csr_matrix, csr_matrix,
