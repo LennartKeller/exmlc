@@ -1,18 +1,16 @@
 from __future__ import annotations
 
-from functools import partial
-from multiprocessing.dummy import Pool, Array
 from os import cpu_count
 from typing import *
 
 import numpy as np
+from joblib import Parallel, delayed
 from scipy.sparse import csr_matrix, lil_matrix, issparse
 from sklearn.base import BaseEstimator
 from sklearn.exceptions import NotFittedError
 from sklearn.linear_model import SGDClassifier
 from sklearn.linear_model.base import LinearClassifierMixin
 from sklearn.utils import check_X_y
-from joblib import Parallel, delayed
 from tqdm import tqdm
 
 

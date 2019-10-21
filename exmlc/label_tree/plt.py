@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from collections import deque
-from functools import partial
 from heapq import heappop, heapify, heappush
 from itertools import chain, repeat
 from multiprocessing.dummy import Pool
@@ -15,9 +14,9 @@ from sklearn.base import clone as clone_estimator
 from sklearn.exceptions import NotFittedError
 from sklearn.linear_model import SGDClassifier
 from sklearn.linear_model.base import LinearClassifierMixin
-
-from tree import HuffmanNode, HuffmanTree
 from tqdm import tqdm
+
+from .tree import HuffmanNode, HuffmanTree
 
 
 class PLTClassifier(BaseEstimator):
@@ -324,7 +323,6 @@ if __name__ == '__main__':
 
     from sklearn.datasets import make_multilabel_classification
     from sklearn.model_selection import train_test_split
-    from sklearn.svm import LinearSVC
     from exmlc.metrics import sparse_average_precision_at_k
     from sklearn.metrics import classification_report
 
