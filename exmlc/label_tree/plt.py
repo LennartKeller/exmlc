@@ -40,10 +40,12 @@ class PLTClassifier(BaseEstimator):
         self.node_clf = node_clf
         self.num_children = num_children
         self.use_probs = use_probs
+
         if n_jobs == -1:
             self.n_jobs = cpu_count()
         else:
             self.n_jobs = n_jobs
+
         self.verbose = verbose
 
     def fit(self, X: Union[np.ndarray, csr_matrix], y: Union[np.ndarray, csr_matrix]) -> PLTClassifier:
@@ -53,10 +55,12 @@ class PLTClassifier(BaseEstimator):
         :param y:
         :return:
         """
+
         self.yi_shape_ = y[0].shape
         self.tree_ = self._create_huffman_tree(y, k=self.num_children)
         self.tree_ = self._assign_train_indices(self.tree_, y)
         self.tree_ = self._fit_tree(self.tree_, X)
+
         return self
 
     def predict(self, X: Union[np.ndarray, csr_matrix]) -> csr_matrix:
@@ -65,20 +69,26 @@ class PLTClassifier(BaseEstimator):
         :param X:
         :return:
         """
+
         if not self.tree_:
             raise NotFittedError
+
         y_pred = []
         X_length = X.shape[0]
+
         if self.verbose:
-            data_iterator = tqdm(enumerate(X))
+            data_iterator = tqdm(enumerate(X), total=X.shape[0])
         else:
             data_iterator = enumerate(X)
+
         if self.verbose:
             print('Predicting samples')
+
         for index, x in data_iterator:
             # if self.verbose:
             #     print(f'Predicting sample {index + 1}/{X_length}')
             y_pred.append(self._traverse_tree_prediction(self.tree_, x))
+
         return csr_matrix(y_pred)
 
     def decision_function(self, X: Union[np.ndarray, csr_matrix], use_probs: bool = None) -> csr_matrix:
@@ -87,10 +97,24 @@ class PLTClassifier(BaseEstimator):
         :param X:
         :return:
         """
+
         if not hasattr(self, 'tree_'):
             raise NotFittedError
+
+        if not use_probs:
+            use_probs = self.use_probs
+
         y_pred_decision = []
-        for index, x in enumerate(X):
+
+        if self.verbose:
+            data_iterator = tqdm(enumerate(X), total=X.shape[0])
+        else:
+            data_iterator = enumerate(X)
+
+        if self.verbose:
+            print('Predicting decision scores')
+
+        for index, x in data_iterator:
             y_pred_decision.append(self._traverse_tree_decision_function(self.tree_, x))
         return csr_matrix(y_pred_decision)
 
@@ -102,9 +126,12 @@ class PLTClassifier(BaseEstimator):
         :param k:
         :return:
         """
+
         if not self.tree_:
             raise NotFittedError
+
         y_scores = self.decision_function(X_test)
+
         return sparse_average_precision_at_k(y_test, y_scores, k=k)
 
     def _create_huffman_tree(self, y: csr_matrix, k: int) -> HuffmanTree:
@@ -149,8 +176,10 @@ class PLTClassifier(BaseEstimator):
         :param y:
         :return:
         """
+
         if self.verbose:
             print('Assigning train data to tree_ nodes')
+
         for node in tree.bfs_traverse():
             compare_row = np.zeros(y[0].shape).ravel()
             compare_row[node.label_idx] = 1
@@ -170,7 +199,9 @@ class PLTClassifier(BaseEstimator):
         :param X: Features to train the classifiers
         :return: the trained huffman label tree_
         """
+
         degree_tree = len(tree)
+
         if self.n_jobs <= 1:
             for index, node in enumerate(list(tree.bfs_traverse())):
                 if self.verbose:
@@ -186,11 +217,13 @@ class PLTClassifier(BaseEstimator):
 
             pool = Pool(self.n_jobs)
             if self.verbose:
-                for _ in tqdm(pool.map(fit_node, enumerate(list(tree.bfs_traverse())))):
+                for _ in tqdm(pool.imap(fit_node, enumerate(list(tree.bfs_traverse()))), total=len(self.tree_) - 1):
                     pass
-
             else:
                 pool.map(fit_node, enumerate(list(tree.bfs_traverse())))
+
+            pool.close()
+
         return tree
 
     def _traverse_tree_prediction(self, tree: HuffmanTree, x: np.ndarray) -> np.ndarray:
@@ -273,7 +306,9 @@ class PLTClassifier(BaseEstimator):
             label_probs[index] = counter / total_no_tags
         return label_probs
 
+
 if __name__ == '__main__':
+
     from sklearn.datasets import make_multilabel_classification
     from sklearn.model_selection import train_test_split
     from sklearn.svm import LinearSVC
@@ -281,13 +316,15 @@ if __name__ == '__main__':
 
     X, y = make_multilabel_classification(n_samples=10000,
                                           n_classes=100,
+                                          n_features=500,
                                           allow_unlabeled=False,
                                           sparse=True,
-                                          return_indicator='sparse')
+                                          return_indicator='sparse',
+                                          random_state=42)
 
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=32)
 
-    plt = PLTClassifier(node_clf=LinearSVC(C=2, loss='hinge'), n_jobs=-1, verbose=True)
+    plt = PLTClassifier(n_jobs=-1, verbose=True)
 
     plt.fit(X_train, y_train)
 
