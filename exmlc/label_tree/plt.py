@@ -16,8 +16,9 @@ from sklearn.exceptions import NotFittedError
 from sklearn.linear_model import SGDClassifier
 from sklearn.linear_model.base import LinearClassifierMixin
 
-from .tree import HuffmanNode, HuffmanTree
+from tree import HuffmanNode, HuffmanTree
 from tqdm import tqdm
+
 
 class PLTClassifier(BaseEstimator):
     """
@@ -30,7 +31,8 @@ class PLTClassifier(BaseEstimator):
                                                                  eta0=0.1,
                                                                  learning_rate='constant',
                                                                  loss='modified_huber',
-                                                                 penalty='l1'),
+                                                                 penalty='l1',
+                                                                 random_state=42),
                  num_children: int = 2,
                  use_probs: bool = True,
                  n_jobs: int = 1,
@@ -63,7 +65,7 @@ class PLTClassifier(BaseEstimator):
 
         return self
 
-    def predict(self, X: Union[np.ndarray, csr_matrix]) -> csr_matrix:
+    def predict(self, X: Union[np.ndarray, csr_matrix], use_probs: bool = None) -> csr_matrix:
         """
         TODO
         :param X:
@@ -72,6 +74,9 @@ class PLTClassifier(BaseEstimator):
 
         if not self.tree_:
             raise NotFittedError
+
+        if use_probs is None:
+            use_probs = self.use_probs
 
         y_pred = []
         X_length = X.shape[0]
@@ -87,7 +92,7 @@ class PLTClassifier(BaseEstimator):
         for index, x in data_iterator:
             # if self.verbose:
             #     print(f'Predicting sample {index + 1}/{X_length}')
-            y_pred.append(self._traverse_tree_prediction(self.tree_, x))
+            y_pred.append(self._traverse_tree_prediction(self.tree_, x, use_probs))
 
         return csr_matrix(y_pred)
 
@@ -101,7 +106,7 @@ class PLTClassifier(BaseEstimator):
         if not hasattr(self, 'tree_'):
             raise NotFittedError
 
-        if not use_probs:
+        if use_probs is None:
             use_probs = self.use_probs
 
         y_pred_decision = []
@@ -115,7 +120,7 @@ class PLTClassifier(BaseEstimator):
             print('Predicting decision scores')
 
         for index, x in data_iterator:
-            y_pred_decision.append(self._traverse_tree_decision_function(self.tree_, x))
+            y_pred_decision.append(self._traverse_tree_decision_function(self.tree_, x, use_probs))
         return csr_matrix(y_pred_decision)
 
     def score(self, X_test: csr_matrix, y_test: csr_matrix, k: int = 3) -> float:
@@ -226,7 +231,7 @@ class PLTClassifier(BaseEstimator):
 
         return tree
 
-    def _traverse_tree_prediction(self, tree: HuffmanTree, x: np.ndarray) -> np.ndarray:
+    def _traverse_tree_prediction(self, tree: HuffmanTree, x: np.ndarray, use_probs: bool) -> np.ndarray:
         """
         Traverses the given label tree_ with a single feature instance to predict (in a depth-first manner).
         At each node the decision of whether continuing to the nodes children or this subtree is made.
@@ -244,7 +249,11 @@ class PLTClassifier(BaseEstimator):
         fifo.extendleft(((children, pr_prob) for children, pr_prob in zip(tree.root.get_children(), repeat(prev_prob))))
         while fifo:
             current_node, prev_prob = fifo.popleft()
-            prob = current_node.clf_predict_proba(x).ravel()[1]
+
+            if use_probs:
+                prob = current_node.clf_predict_proba(x).ravel()[1].item()
+            else:
+                prob = current_node.clf_decision_function(x).item()
 
             if prob * prev_prob < self.threshold:
                 continue
@@ -265,7 +274,7 @@ class PLTClassifier(BaseEstimator):
 
         return yi_vector.astype('int8').ravel()
 
-    def _traverse_tree_decision_function(self, tree: HuffmanTree, x: np.ndarray) -> np.ndarray:
+    def _traverse_tree_decision_function(self, tree: HuffmanTree, x: np.ndarray, use_probs: bool) -> np.ndarray:
 
         yi_pred = []
         yi_prob = []
@@ -275,8 +284,12 @@ class PLTClassifier(BaseEstimator):
 
         while fifo:
             current_node, prev_prob = fifo.popleft()
+            if use_probs:
+                prob = current_node.clf_predict_proba(x).ravel()[1].item()
+            else:
+                prob = current_node.clf_decision_function(x).item()  # use continuous values
 
-            prob = current_node.clf_predict_proba(x).ravel()[1]
+
             if prob * prev_prob < self.threshold:
                 continue
 
@@ -289,9 +302,9 @@ class PLTClassifier(BaseEstimator):
                 yi_pred.append(current_node.label_idx[0])
                 yi_prob.append(prob)
 
-        yi_vector = np.zeros(self.yi_shape_)
+        yi_vector = np.zeros(self.yi_shape_, dtype='float64')
         yi_vector[0, yi_pred] = yi_prob
-        return yi_vector.astype('float').ravel()
+        return yi_vector.ravel()
 
     def _compute_label_probabilities(self, y: Union[np.ndarray, csr_matrix]) -> Dict[int, float]:
         """
@@ -313,9 +326,10 @@ if __name__ == '__main__':
     from sklearn.model_selection import train_test_split
     from sklearn.svm import LinearSVC
     from exmlc.metrics import sparse_average_precision_at_k
+    from sklearn.metrics import classification_report
 
-    X, y = make_multilabel_classification(n_samples=10000,
-                                          n_classes=100,
+    X, y = make_multilabel_classification(n_samples=100,
+                                          n_classes=10,
                                           n_features=500,
                                           allow_unlabeled=False,
                                           sparse=True,
@@ -324,10 +338,16 @@ if __name__ == '__main__':
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=32)
 
-    plt = PLTClassifier(n_jobs=-1, verbose=True)
+    plt = PLTClassifier(n_jobs=-1, verbose=True, use_probs=False)
 
+
+    print('Start training')
     plt.fit(X_train, y_train)
 
+    print('Start predicting')
     scores = plt.decision_function(X_test)
 
     print(sparse_average_precision_at_k(y_test, scores, k=1))
+
+    predictions = plt.predict(X_test)
+    print(classification_report(y_test, predictions))
