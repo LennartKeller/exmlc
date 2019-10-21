@@ -17,7 +17,6 @@ from sklearn.linear_model import SGDClassifier
 from sklearn.linear_model.base import LinearClassifierMixin
 
 from .tree import HuffmanNode, HuffmanTree
-from ..metrics import sparse_average_precision_at_k
 from tqdm import tqdm
 
 class PLTClassifier(BaseEstimator):
@@ -82,7 +81,7 @@ class PLTClassifier(BaseEstimator):
             y_pred.append(self._traverse_tree_prediction(self.tree_, x))
         return csr_matrix(y_pred)
 
-    def decision_function(self, X: Union[np.ndarray, csr_matrix]) -> csr_matrix:
+    def decision_function(self, X: Union[np.ndarray, csr_matrix], use_probs: bool = None) -> csr_matrix:
         """
         TODO
         :param X:
@@ -92,7 +91,7 @@ class PLTClassifier(BaseEstimator):
             raise NotFittedError
         y_pred_decision = []
         for index, x in enumerate(X):
-            y_pred_decision.append(self._traverse_tree_prediction(self.tree_, x))
+            y_pred_decision.append(self._traverse_tree_decision_function(self.tree_, x))
         return csr_matrix(y_pred_decision)
 
     def score(self, X_test: csr_matrix, y_test: csr_matrix, k: int = 3) -> float:
@@ -187,11 +186,11 @@ class PLTClassifier(BaseEstimator):
 
             pool = Pool(self.n_jobs)
             if self.verbose:
-                pool.map(fit_node,
-                         tqdm(enumerate(list(tree.bfs_traverse()))))
+                for _ in tqdm(pool.map(fit_node, enumerate(list(tree.bfs_traverse())))):
+                    pass
+
             else:
-                pool.map(fit_node,
-                         enumerate(list(tree.bfs_traverse())))
+                pool.map(fit_node, enumerate(list(tree.bfs_traverse())))
         return tree
 
     def _traverse_tree_prediction(self, tree: HuffmanTree, x: np.ndarray) -> np.ndarray:
@@ -273,3 +272,25 @@ class PLTClassifier(BaseEstimator):
             counter = np.nonzero(column)[0].shape[0]
             label_probs[index] = counter / total_no_tags
         return label_probs
+
+if __name__ == '__main__':
+    from sklearn.datasets import make_multilabel_classification
+    from sklearn.model_selection import train_test_split
+    from sklearn.svm import LinearSVC
+    from exmlc.metrics import sparse_average_precision_at_k
+
+    X, y = make_multilabel_classification(n_samples=10000,
+                                          n_classes=100,
+                                          allow_unlabeled=False,
+                                          sparse=True,
+                                          return_indicator='sparse')
+
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+    plt = PLTClassifier(node_clf=LinearSVC(C=2, loss='hinge'), n_jobs=-1, verbose=True)
+
+    plt.fit(X_train, y_train)
+
+    scores = plt.decision_function(X_test)
+
+    print(sparse_average_precision_at_k(y_test, scores, k=1))
