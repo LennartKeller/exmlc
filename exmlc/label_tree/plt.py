@@ -288,7 +288,6 @@ class PLTClassifier(BaseEstimator):
             else:
                 prob = current_node.clf_decision_function(x).item()  # use continuous values
 
-
             if prob * prev_prob < self.threshold:
                 continue
 
@@ -320,7 +319,6 @@ class PLTClassifier(BaseEstimator):
 
 
 if __name__ == '__main__':
-
     from sklearn.datasets import make_multilabel_classification
     from sklearn.model_selection import train_test_split
     from exmlc.metrics import sparse_average_precision_at_k
@@ -337,7 +335,6 @@ if __name__ == '__main__':
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=32)
 
     plt = PLTClassifier(n_jobs=-1, verbose=True, use_probs=False)
-
 
     print('Start training')
     plt.fit(X_train, y_train)
