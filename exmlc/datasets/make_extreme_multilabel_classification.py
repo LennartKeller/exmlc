@@ -5,13 +5,13 @@ from scipy.sparse import csr_matrix
 from sklearn.datasets import make_multilabel_classification
 
 
-def make_extreme_multilabel_classification(n_samples=10000,
-                                           n_features=5000,
-                                           n_classes=100,
-                                           n_labels=5,
-                                           allow_unlabeled=False,
-                                           return_distributions=False,
-                                           random_state=None) -> Tuple[csr_matrix, csr_matrix,
+def make_extreme_multilabel_classification(n_samples: int = 10000,
+                                           n_features: int = 5000,
+                                           n_classes: int = 100,
+                                           n_labels: int = 5,
+                                           allow_unlabeled: bool = False,
+                                           return_distributions: bool = False,
+                                           random_state: int = None) -> Tuple[csr_matrix, csr_matrix,
                                                                        Optional[array], Optional[array]]:
     """
     Simple wrapper for sklearns make_multilabel_classification
@@ -23,7 +23,8 @@ def make_extreme_multilabel_classification(n_samples=10000,
     TODO Think about a way to do this.
     :param n_samples: number of samples | default 10000
     :param n_features: number of features | default 50
-    :param n_labels: number of labels | default 500
+    :param n_classes: number of total labels | default 100
+    :param n_labels: number of labels per instance | default 5
     :param allow_unlabeled: whether or not the dataset contains unlabeled samples | default False
     :param return_distributions: whether or not the distribution should be returned | default False
     :param random_state: random_state for creating data | default None
