@@ -53,6 +53,10 @@ class HuffmanNode:
         self.visited_while_prediction += 1
         return self.clf.predict_proba(X)
 
+    def clf_decision_function(self, X: Union[np.ndarray, csr_matrix]) -> np.ndarray:
+        self.visited_while_prediction += 1
+        return self.clf.decision_function(X)
+
     def is_leaf(self) -> bool:
         if not self.children:
             return True
