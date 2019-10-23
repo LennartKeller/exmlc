@@ -196,8 +196,8 @@ class PLTClassifier(BaseEstimator):
 
     def _fit_tree(self, tree: HuffmanTree, X: np.ndarray) -> HuffmanTree:
         """
-        Fits the tree_.
-        The tree_ is traversed in a breath-first style and the classifier at each not is fitted
+        Fits the tree.
+        The tree is traversed in a breath-first style and the classifier at each not is fitted
         with the binary y_train data which is assigned to that node.
         :param tree: huffman label tree_.
         :param X: Features to train the classifiers
@@ -237,7 +237,7 @@ class PLTClassifier(BaseEstimator):
         Therefore the nodes classifiers prediction is used as well as the prediction of the previous node.
         If leaf nodes are reached the corresponding labels are returned.
         TODO finalize this as soon as possible
-        :param tree: huffman label tree_
+        :param tree: huffman label tree
         :param x: single instance of the data to predict
         :return: numpy array containing the label indices.
         """
