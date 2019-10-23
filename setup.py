@@ -10,7 +10,8 @@ setup(
             'networkx',
             'scikit-learn',
             'joblib',
-            'stop_words'
+            'stop_words',
+            'tqdm'
       ],
       license='LICENSE'
 )
