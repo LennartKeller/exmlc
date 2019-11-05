@@ -8,7 +8,7 @@ from gensim.models.doc2vec import TaggedDocument, Doc2Vec
 from sklearn.exceptions import NotFittedError
 from sklearn.neighbors import NearestNeighbors
 import logging
-
+from tqdm import tqdm
 
 class TagEmbeddingClassifier(BaseEstimator):
 
@@ -75,20 +75,34 @@ class TagEmbeddingClassifier(BaseEstimator):
     def _create_tag_docs(self, X: Union[np.ndarray, csr_matrix], y: csr_matrix) -> np.ndarray:
         self.classes_ = y.shape[1]
         tag_doc_idx = list()
-
-        for tag_vec in y.T:
+        if self.verbose:
+            print('Sorting tag and docs')
+            iterator = tqdm(y.T)
+        else:
+            iterator = y.T
+        for tag_vec in iterator:
             pos_samples = tag_vec.nonzero()[1]
             tag_doc_idx.append(pos_samples)
         return np.asarray(tag_doc_idx)
 
     def _create_tag_corpus(self, X: np.array, tag_doc_idx: np.array) -> List[str]:
         tag_corpus = list()
-        for indices in tag_doc_idx:
+        if self.verbose:
+            print('Creating Tag-Doc Corpus')
+            iterator = tqdm(tag_doc_idx)
+        else:
+            iterator = tag_doc_idx
+        for indices in iterator:
             tag_corpus.append(" ".join(X[indices]))
         return np.asarray(tag_corpus)
 
     def _tagged_document_generator(self, tag_corpus: np.array) -> Generator[TaggedDocument, None, None]:
-        for tag_id, doc in enumerate(tag_corpus):
+        if self.verbose:
+            print('Preparing Tagged Documents for Doc2Vec Model')
+            iterator = tqdm(enumerate(tag_corpus))
+        else:
+            iterator = enumerate(tag_corpus)
+        for tag_id, doc in iterator:
             yield TaggedDocument(words=doc.split(' '), tags=[tag_id])
 
     def _infer_new_docs(self, X: Iterable[str]) -> np.ndarray:
