@@ -1,13 +1,14 @@
 from __future__ import annotations
+
+import logging
 from typing import *
-from sklearn.base import BaseEstimator
-from scipy.sparse import csr_matrix, lil_matrix
-from sklearn.utils import check_X_y
+
 import numpy as np
 from gensim.models.doc2vec import TaggedDocument, Doc2Vec
+from scipy.sparse import csr_matrix, lil_matrix
+from sklearn.base import BaseEstimator
 from sklearn.exceptions import NotFittedError
 from sklearn.neighbors import NearestNeighbors
-import logging
 from tqdm import tqdm
 
 
