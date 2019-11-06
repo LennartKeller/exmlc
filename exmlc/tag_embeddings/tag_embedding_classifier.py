@@ -17,7 +17,6 @@ class TagEmbeddingClassifier(BaseEstimator):
                  embedding_dim: int = 300,
                  window_size: int = 5,
                  min_count: int = 2,
-                 pooling: str = 'max',
                  epochs: int = 10,
                  distance_metric: str = 'cosine',
                  n_jobs: int = 1,
@@ -26,7 +25,6 @@ class TagEmbeddingClassifier(BaseEstimator):
         self.embedding_dim = embedding_dim
         self.window_size = window_size
         self.min_count = min_count
-        self.pooling = pooling
         self.epochs = epochs
         self.distance_metric = distance_metric
         self.n_jobs = n_jobs
@@ -41,7 +39,7 @@ class TagEmbeddingClassifier(BaseEstimator):
         # create corpus
         # self.tag_corpus = self._create_tag_corpus(X, self.tag_doc_idx_)
         # created TaggedDocuments for Doc2Vec gensim
-        tagged_docs = list(self._tagged_document_generator(self._create_tag_corpus(X, self._create_tag_docs(X, y))))
+        tagged_docs = list(self._tagged_document_generator(self._create_tag_corpus(X, self._create_tag_docs(y))))
         if self.verbose:
             logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
 
@@ -96,7 +94,15 @@ class TagEmbeddingClassifier(BaseEstimator):
                 result[sample_ind, tag_ind] = tag_distance
         return result.tocsr()
 
-    def _create_tag_docs(self, X: Union[np.ndarray, csr_matrix], y: csr_matrix) -> np.ndarray:
+    def log_decision_function(self, X: Iterable[str], n_labels: int = 10):
+        if not hasattr(self, 'doc_embeddings_'):
+            raise NotFittedError
+
+        distances = self.decision_function(X=X, n_labels=n_labels)
+        log_distances = self._get_log_distances(X)
+        return log_distances
+
+    def _create_tag_docs(self, y: csr_matrix) -> np.ndarray:
         self.classes_ = y.shape[1]
         tag_doc_idx = list()
         if self.verbose:
@@ -105,7 +111,7 @@ class TagEmbeddingClassifier(BaseEstimator):
         else:
             iterator = y.T
         for tag_vec in iterator:
-            pos_samples = tag_vec.nonzero()[1]
+            pos_samples = tag_vec.nonzero()[1]  # get indices of pos samples
             tag_doc_idx.append(pos_samples)
         return np.asarray(tag_doc_idx)
 
@@ -135,6 +141,19 @@ class TagEmbeddingClassifier(BaseEstimator):
         for sample in X:
             sample_doc_embeddings.append(self.doc2vec_model_.infer_vector(sample.split()))
         return sample_doc_embeddings
+
+    def _get_log_distances(self, y_distances: csr_matrix, base=0.5) -> csr_matrix:
+        """
+        Returns the logarithmised version (base default: 0.5) of the distance matrix returned by TagEmebddingClassifier.
+        This must be used in order to compute valid precision precision at k scores.
+         => Small Distances should be ranked better than big ones
+        :param y_distance: sparse distance matrix (multilabel matrix with distances instead of binary indicators)
+        :param base: base of the log function (must be smaller then one)
+        :return: sparse matrix with the log values
+        """
+        log_y_distances = y_distances.tocoo()
+        log_y_distances.data = np.log(log_y_distances.data) / np.log(base)
+        return log_y_distances.tocsr()
 
 
 if __name__ == '__main__':
