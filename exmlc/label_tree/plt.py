@@ -261,7 +261,7 @@ class PLTClassifier(BaseEstimator):
             new_prev_prob = prob * prev_prob
 
             if not current_node.is_leaf():
-                fifo.extendleft(((children, pr) for children, pr in zip(current_node.get_children(), repeat(prob))))
+                fifo.extendleft(((children, pr) for children, pr in zip(current_node.get_children(), repeat(new_prev_prob))))
 
             if current_node.is_leaf():
                 if len(current_node.label_idx) != 1:
@@ -293,7 +293,7 @@ class PLTClassifier(BaseEstimator):
 
             new_prev_prob = prob * prev_prob
             if not current_node.is_leaf():
-                fifo.extendleft(((children, pr) for children, pr in zip(current_node.get_children(), repeat(prob))))
+                fifo.extendleft(((children, pr) for children, pr in zip(current_node.get_children(), repeat(new_prev_prob))))
 
             if current_node.is_leaf():
                 assert len(current_node.label_idx) == 1, Exception('Leaf node has more than one label associated.')
