@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import *
 from sklearn.base import BaseEstimator
-from scipy.sparse import csr_matrix
+from scipy.sparse import csr_matrix, lil_matrix
 from sklearn.utils import check_X_y
 import numpy as np
 from gensim.models.doc2vec import TaggedDocument, Doc2Vec
@@ -10,13 +10,14 @@ from sklearn.neighbors import NearestNeighbors
 import logging
 from tqdm import tqdm
 
+
 class TagEmbeddingClassifier(BaseEstimator):
 
     def __init__(self,
                  embedding_dim: int = 300,
                  window_size: int = 5,
                  min_count: int = 2,
-                 pooling:str = 'max',
+                 pooling: str = 'max',
                  epochs: int = 10,
                  distance_metric: str = 'cosine',
                  n_jobs: int = 1,
@@ -33,23 +34,24 @@ class TagEmbeddingClassifier(BaseEstimator):
 
     def fit(self, X: Union[np.ndarray, csr_matrix], y: csr_matrix) -> TagEmbeddingClassifier:
 
-        # create tag_docs (each text assiganed to the tag)
-        self.tag_doc_idx_ = self._create_tag_docs(X, y)
-        # create corpus
-        self.tag_corpus = self._create_tag_corpus(X, self.tag_doc_idx_)
+        self.n_tags_ = y.shape[1]
 
+        # create tag_docs (each text assiganed to the tag)
+        # self.tag_doc_idx_ = self._create_tag_docs(X, y)
+        # create corpus
+        # self.tag_corpus = self._create_tag_corpus(X, self.tag_doc_idx_)
         # created TaggedDocuments for Doc2Vec gensim
-        tagged_docs = [TaggedDocument(words=doc.split(),tags=[tag_id]) for tag_id, doc in enumerate(self.tag_corpus)]
+        tagged_docs = list(self._tagged_document_generator(self._create_tag_corpus(X, self._create_tag_docs(X, y))))
         if self.verbose:
             logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
 
         # train model
         self.doc2vec_model_ = Doc2Vec(tagged_docs,
-                        vector_size=self.embedding_dim,
-                        window=self.window_size,
-                        min_count=self.min_count,
-                        workers=self.n_jobs,
-                        epochs=self.epochs)
+                                      vector_size=self.embedding_dim,
+                                      window=self.window_size,
+                                      min_count=self.min_count,
+                                      workers=self.n_jobs,
+                                      epochs=self.epochs)
 
         self.doc_embeddings_ = self.doc2vec_model_.docvecs.vectors_docs.copy()
 
@@ -66,11 +68,33 @@ class TagEmbeddingClassifier(BaseEstimator):
             nearest_neighbors = knn.kneighbors([emb])[1][0]
             tags = [self.doc2vec_model_.docvecs.index_to_doctag(i).item() for i in nearest_neighbors]
             X_nearest_neighbors.append(tags)
-        return np.asarray(tags, dtype='int64')
 
+        # create multilabel binary sparse matrix
+        result = lil_matrix((X.shape[0], self.n_tags_), dtype='int8')
+        for sample_ind, tag_idx in enumerate(X_nearest_neighbors):
+            result[sample_ind, tag_idx] = 1
+        return result.tocsr()
 
+    def decision_function(self, X: Iterable[str], n_labels: int = 10):
+        if not hasattr(self, 'doc_embeddings_'):
+            raise NotFittedError
 
-
+        new_doc_embeddings = self._infer_new_docs(X)
+        knn = NearestNeighbors(n_neighbors=n_labels, metric=self.distance_metric)
+        knn.fit(self.doc_embeddings_)
+        X_nearest_neighbors = []
+        for emb in new_doc_embeddings:
+            nearest_neighbors = knn.kneighbors([emb])
+            distances, idx = nearest_neighbors
+            distances, idx = distances[0], idx[0]
+            tags = [self.doc2vec_model_.docvecs.index_to_doctag(i).item() for i in idx]
+            idx_tags = list(zip(distances, tags))
+            X_nearest_neighbors.append(idx_tags)
+        result = lil_matrix((X.shape[0], self.n_tags_), dtype='float64')
+        for sample_ind, entry in enumerate(X_nearest_neighbors):
+            for tag_distance, tag_ind in entry:
+                result[sample_ind, tag_ind] = tag_distance
+        return result.tocsr()
 
     def _create_tag_docs(self, X: Union[np.ndarray, csr_matrix], y: csr_matrix) -> np.ndarray:
         self.classes_ = y.shape[1]
