@@ -17,7 +17,7 @@ from sklearn.linear_model.base import LinearClassifierMixin
 from tqdm import tqdm
 
 from .tree import HuffmanNode, HuffmanTree
-
+from ..metrics import sparse_average_precision_at_k
 
 class PLTClassifier(BaseEstimator):
     """
