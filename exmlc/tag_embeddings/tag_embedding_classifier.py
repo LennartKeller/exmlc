@@ -25,8 +25,7 @@ class TagEmbeddingClassifier(BaseEstimator):
     and the NearestNeighbors model from "scikit-learn" for finding similar tags at prediction.
 
     In theory this model is highly flexible because it not only has a lot of parameters which can be fine tuned
-    but the embedding method could be exchanged completely by another more sophisticated one.
-    But in practice the performance is as of now rather poor.
+    But in practice as of now the performance is rather poor.
     TODO Do last hyperparameter search.
 
     For more information about the parameters please refer to the constructor method.
@@ -58,7 +57,7 @@ class TagEmbeddingClassifier(BaseEstimator):
         :param min_count: minimum number of occurrences a word must have in order
         to be used for computing the tag embeddings
         :param epochs: number of epochs (complete iterations over the whole train data)
-        when computing the tag emebeddings
+        when computing the tag embeddings
         :param distance_metric: the distane metric for finding similar tags in the vector space
         :param n_jobs: number of cores to use for training the model (-1 means all available cores)
         :param verbose: wether or not information while training should be printed
@@ -108,6 +107,14 @@ class TagEmbeddingClassifier(BaseEstimator):
         return self
 
     def predict(self, X: Iterable[str], n_labels=10) -> np.array:
+        """
+        Predicts n labels for every document in X.
+        Therefore a embedding for each doc in X is computed.
+        After that a k nearest neighbor search is used to find the n most close tag embedding in the embedding space
+        :param X: new Document to be tagged
+        :param n_labels: the desired number of tags for each text
+        :return: a label matrix of shape (len(X), self.n_tags)
+        """
         if not hasattr(self, 'doc_embeddings_'):
             raise NotFittedError
         new_doc_embeddings = self._infer_new_docs(X)
@@ -126,6 +133,15 @@ class TagEmbeddingClassifier(BaseEstimator):
         return result.tocsr()
 
     def decision_function(self, X: Iterable[str], n_labels: int = 10):
+        """
+        This method is similar to the predict method.
+        But instead of returning a binary label matrix it returns a label matrix
+         where each entry for a predicted tag is the distance in between the embedding document and the tag embedding.
+        Returns the distances to each predicted tag
+        :param X:
+        :param n_labels:
+        :return:
+        """
         if not hasattr(self, 'doc_embeddings_'):
             raise NotFittedError
 
@@ -156,9 +172,9 @@ class TagEmbeddingClassifier(BaseEstimator):
 
     def _create_tag_docs(self, y: csr_matrix) -> np.ndarray:
         """
-        Groups the indices of each
-        :param y:
-        :return:
+        Creates a mapping of each tags and their associated texts.
+        :param y: sparse label matrix
+        :return: array of shape (n_labels,) containing the indices of each text connected to a label
         """
         self.classes_ = y.shape[1]
 
@@ -175,6 +191,13 @@ class TagEmbeddingClassifier(BaseEstimator):
         return np.asarray(tag_doc_idx)
 
     def _create_tag_corpus(self, X: np.array, tag_doc_idx: np.array) -> List[str]:
+        """
+        Creates the corpus used to train the tag embeddings.
+        Each text associated with one tag is concatenated to one big document.
+        :param X: Iterable of the texts as string
+        :param tag_doc_idx: Mapping of each label to their associated texts
+        :return: array of shape (n_tags,) containing the texts
+        """
         tag_corpus = list()
         if self.verbose:
             print('Creating Tag-Doc Corpus')
@@ -186,6 +209,11 @@ class TagEmbeddingClassifier(BaseEstimator):
         return np.asarray(tag_corpus)
 
     def _tagged_document_generator(self, tag_corpus: np.array) -> Generator[TaggedDocument, None, None]:
+        """
+        Generator yielding the tagged document object required by gensim.
+        :param tag_corpus: the corpus of tags and their texts
+        :return: TaggedDocument objects
+        """
         if self.verbose:
             print('Preparing Tagged Documents for Doc2Vec Model')
             iterator = tqdm(enumerate(tag_corpus))
@@ -205,7 +233,7 @@ class TagEmbeddingClassifier(BaseEstimator):
 
         """
         Returns the logarithmic version (base default: 0.5) of the distance matrix returned by TagEmebddingClassifier.
-        This must be used in order to compute valid precision precision at k scores
+        This must be used in order to compute valid precision@k scores
         since small Distances should be ranked better than great ones.
         :param y_distances: sparse distance matrix (multilabel matrix with distances instead of binary indicators)
         :param base: base of the log function (must be smaller then one)
