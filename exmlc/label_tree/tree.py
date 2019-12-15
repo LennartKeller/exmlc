@@ -69,16 +69,16 @@ class HuffmanNode:
         """
         Predict the probability/probabilities of belonging to the tag or tags of the instances for each sample in X.
         :param X: Features in sparse representation of shape (n_samples, n_features)
-        :return: vector of the probabilities for each sample in X
+        :return: vector of shape(n_samples) containing the probabilities for each sample in X
         """
         self.visited_while_prediction += 1
         return self.clf.predict_proba(X)
 
     def clf_decision_function(self, X: Union[np.ndarray, csr_matrix]) -> np.ndarray:
         """
-        Predict the decision score of belonging the instances tag or tags for each sample in X.
+        Predict the decision score(s) of belonging to the tag or tags of the instances for each sample in X.
         :param X: Features in sparse representation of shape (n_samples, n_features)
-        :return:
+        :return: vector of shape(n_samples) containing the decision scores for each sample in X
         """
         self.visited_while_prediction += 1
         return self.clf.decision_function(X)
