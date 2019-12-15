@@ -14,7 +14,7 @@ from tqdm import tqdm
 
 class TagEmbeddingClassifier(BaseEstimator):
     """
-    This Classifiers computes "tag-embeddings" from by using texts assigned to the tags
+    This Classifiers computes "tag-embeddings" by using the raw texts assigned to the tags
     as described by Chen et. al (2017)
     Link: https://pdfs.semanticscholar.org/2301/98d3b8ad550aaa77d28155091cc8a3d4032d.pdf
 
@@ -24,19 +24,21 @@ class TagEmbeddingClassifier(BaseEstimator):
     This model uses the "gensim" library for computing the tag-embedding
     and the NearestNeighbors model from "scikit-learn" for finding similar tags at prediction.
 
+    In theory this model is highly flexible because it not only has a lot of parameters which can be fine tuned
+    but the embedding method could be exchanged completely by another more sophisticated one.
+    But in practice the performance is as of now rather poor.
+    TODO Do last hyperparameter search.
+
+    For more information about the parameters please refer to the constructor method.
+
     Training:
     Each text which is assigned to a specific tag from the train data
     is concatenated and then document embeddings are trained on these collections of text.
-    So these each of this document-vectors represent a tag and therefore will here be referred as tag-embeddings.
+    So these each of this document embedding vectors represents a tag and therefore will be called tag-embedding.
 
     Prediction:
     Document embeddings for the new texts are computed using the trained embedding-model.
     Then a k-nearest neighbor search is performed in order to find the most similar tags-embeddings.
-
-    Parameters:
-    This model is highly flexible because it not only has a lot of parameters which can be fine tuned
-    but the embedding process could be exchanged completely by another more sophisticated one.
-    For more information about the parameters please refer to the constructor method.
     """
 
     def __init__(self,
@@ -49,7 +51,7 @@ class TagEmbeddingClassifier(BaseEstimator):
                  verbose: bool = False):
 
         """
-        Constructor of the TagEmbedding Mode class
+        Constructor of the TagEmbedding model class.
         :param embedding_dim: the number of dimension a computed tag embedding will have
         :param window_size: the size of the sliding window for computing the word embeddings
         that will be used to compute the tag embeddings
@@ -72,10 +74,14 @@ class TagEmbeddingClassifier(BaseEstimator):
 
     def fit(self, X: Union[np.ndarray, csr_matrix], y: csr_matrix) -> TagEmbeddingClassifier:
         """
-
-        :param X:
-        :param y:
-        :return:
+        Fits the model.
+        First the train data will grouped by the tags.
+        Then the embeddings are trained.
+        The trained embeddings are bound to the doc_embeddings_ attribute
+        The number of tags in the training set will be bound to n_tags_
+        :param X: Iterable of documents as strings
+        :param y: label matrix in sparse format
+        :return: fitted instance of itself
         """
 
         self.n_tags_ = y.shape[1]
@@ -143,19 +149,26 @@ class TagEmbeddingClassifier(BaseEstimator):
     def log_decision_function(self, X: Iterable[str], n_labels: int = 10):
         if not hasattr(self, 'doc_embeddings_'):
             raise NotFittedError
-
+        # TODO Uncomment this if sure that nothing will break
         distances = self.decision_function(X=X, n_labels=n_labels)
         log_distances = self._get_log_distances(X)
         return log_distances
 
     def _create_tag_docs(self, y: csr_matrix) -> np.ndarray:
+        """
+        Groups the indices of each
+        :param y:
+        :return:
+        """
         self.classes_ = y.shape[1]
-        tag_doc_idx = list()
+
         if self.verbose:
             print('Sorting tag and docs')
             iterator = tqdm(y.T)
         else:
             iterator = y.T
+
+        tag_doc_idx = list()
         for tag_vec in iterator:
             pos_samples = tag_vec.nonzero()[1]  # get indices of pos samples
             tag_doc_idx.append(pos_samples)
@@ -189,20 +202,22 @@ class TagEmbeddingClassifier(BaseEstimator):
         return sample_doc_embeddings
 
     def _get_log_distances(self, y_distances: csr_matrix, base=0.5) -> csr_matrix:
+
         """
-        Returns the logarithmised version (base default: 0.5) of the distance matrix returned by TagEmebddingClassifier.
-        This must be used in order to compute valid precision precision at k scores.
-         => Small Distances should be ranked better than big ones
-        :param y_distance: sparse distance matrix (multilabel matrix with distances instead of binary indicators)
+        Returns the logarithmic version (base default: 0.5) of the distance matrix returned by TagEmebddingClassifier.
+        This must be used in order to compute valid precision precision at k scores
+        since small Distances should be ranked better than great ones.
+        :param y_distances: sparse distance matrix (multilabel matrix with distances instead of binary indicators)
         :param base: base of the log function (must be smaller then one)
         :return: sparse matrix with the log values
         """
+
         log_y_distances = y_distances.tocoo()
         log_y_distances.data = np.log(log_y_distances.data) / np.log(base)
         return log_y_distances.tocsr()
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':   # used for debugging and testing ...
 
     X = np.array([
         'Das ist ein Auto',
