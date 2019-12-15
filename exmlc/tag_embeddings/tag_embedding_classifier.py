@@ -235,7 +235,6 @@ class TagEmbeddingClassifier(BaseEstimator):
         return sample_doc_embeddings  # TODO can this be casted to a np.array?
 
     def _get_log_distances(self, y_distances: csr_matrix, base=0.5) -> csr_matrix:
-
         """
         Returns the logarithmic version (base default: 0.5) of the distance matrix returned by TagEmebddingClassifier.
         This must be used in order to compute valid precision@k scores
@@ -250,7 +249,7 @@ class TagEmbeddingClassifier(BaseEstimator):
         return log_y_distances.tocsr()
 
 
-if __name__ == '__main__':   # used for debugging and testing ...
+if __name__ == '__main__':  # used for debugging and testing ...
 
     X = np.array([
         'Das ist ein Auto',
@@ -261,12 +260,12 @@ if __name__ == '__main__':   # used for debugging and testing ...
         'Das ist ein Computer'
     ])
     y = [
-        [1,2],
-        [1,4],
-        [4,5,6],
-        [1,2,3],
-        [2,5,1],
-        [9,7]
+        [1, 2],
+        [1, 4],
+        [4, 5, 6],
+        [1, 2, 3],
+        [2, 5, 1],
+        [9, 7]
     ]
     from sklearn.preprocessing import MultiLabelBinarizer
     from sklearn.model_selection import train_test_split
