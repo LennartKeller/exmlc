@@ -20,20 +20,48 @@ class OneVsAllLinearClf(BaseEstimator):
     for multilabel classification tasks.
     The one vs all method trains a classifier for each tag in the train set
     to make a binary decision of whether given sample belongs to the tag or not.
-    While this methods performs very good in most cases and it scales with the number of labels
+    At prediction for one sample each classifier is evaluated to obtain the tags.
+    While this method performs very good in most cases it scales with the number of labels
     and thus is often computationally infeasible on extreme multilabel classification scale datasets.
-    This is problem not only concerns the memory usage but also the time required for training and often more important
-    the time for computing the predictions since for each new instance to predict the whole set of classifiers has to be
+    This problem not only concerns the memory usage but also the time required for training and often more important
+    the time for computing the predictions since for each instance at prediction the whole set of classifiers has to be
     evaluated.
 
-    In order to overcome or least weaken the constraint of memory usage of the one vsl all approach
+    The model itself does not have any parameters for fine-tuning,
+    but the classifier used for each tag should be tuned carefully in order to obtain best results.
+    If it becomes striking that the performance is harmed because too many tags are assigned to each instance
+    a custom threshold could be used to decrease the number of tags. In this case a solution
+    for non-probabilistic classifiers such as support vector machines has to be found.
+
+    In order to overcome or least weaken the constraint of memory usage of the one vs all approach
     this implementation makes use of scikit-learns ability to convert the coefficient matrices
     of fitted linear models from dense to sparse format in order to decrease the memory usage.
 
+    Also while training the classifiers multi-threading used in order to speed up this process.
+
     Obviously the limitation on linear classification models restricts the theoretical performance
-    of this approach but in case of text classification which is the most probable use case of exmlc
-    linear methods such as an support vector machine with a linear kernel are empirically proven
+    of this approach. But in the case of text classification which is the most probable use cases of exmlc
+    linear methods such as a support vector machine with a linear kernel are empirically proven
     to perform quiet well.
+
+    To even further increase memory usage consider using L1-Regularization for the tag-classifiers since
+    this produces even more sparse coefficient matrices. But keep in mind that this could also harm
+    the performance of the model since L2 or Elasticnet often yield higher accuracy.
+
+    Thus as stated above this problem transformation approach yield good results in most cases
+    it also theoretically suffers from a problem arising from its design: The label imbalance.
+    In most multilabel and nearly all exmlc datasets the labels are not equally distributed
+    but in a very heavy tailed manner.
+    This means that there is small of number of labels which occur very often while
+    the majority of labels is only used very rarely (often not more than once or twice).
+    Hence learning to assign the rare labels correctly is very hard.
+    Even though this is a general problem shared by all extreme multilabel classification approaches
+    in this case it is reinforced by the fact that by dividing the data
+    into a set of binary classification decisions the imbalance is increased since even the most common
+    tag is only assigned to a tiny minority of instances compared to the whole set of instances.
+
+    Please note that despite of the type annotations you can also can use nonlinear classifiers
+    if you set the sparsify parameter to False.
     """
 
     def __init__(self,
@@ -41,7 +69,13 @@ class OneVsAllLinearClf(BaseEstimator):
                  sparsify: bool = True,
                  n_jobs: int = 1,
                  verbose: bool = False):
-
+        """
+        Constructor of the OneVsAllLinearClf class
+        :param clf: base classifier used for each tag
+        :param sparsify: whether or not the coefficient should be converted to sparse formatted after fitting
+        :param n_jobs: Number of cores to use while training each clf
+        :param verbose: Whether or not to print information while training and prediction
+        """
         self.base_clf = clf
         self.sparsify = sparsify
 
@@ -54,10 +88,13 @@ class OneVsAllLinearClf(BaseEstimator):
 
     def fit(self, X: Union[csr_matrix, np.ndarray], y: csr_matrix) -> OneVsAllLinearClf:
         """
-        TODO
-        :param X:
-        :param y:
-        :return:
+        Fits the model.
+        For each tag in the training data a binary classifier model is trained.
+        If sparsify is True the coefficient matrix of a trained instance will be formatted to sparse format
+        which decreases the memory usage significantly.
+        :param X: Features in sparse representation of shape (n_samples, n_features)
+        :param y: sparse binary label matrix of shape (n_samples, n_labels)
+        :return: fitted instance of itself
         """
         check_X_y(X, y,
                   accept_sparse=True,
@@ -95,8 +132,8 @@ class OneVsAllLinearClf(BaseEstimator):
                 :param X: train data
                 :param y: binary label vec for one distinct label
                 :param clf_store: array with label clfs
-                :param sparsify: see above
-                :param verbose: see above
+                :param sparsify: see in constructor
+                :param verbose: see parent method
                 :return: None
                 """
 
@@ -141,7 +178,13 @@ class OneVsAllLinearClf(BaseEstimator):
         return self
 
     def predict(self, X: Union[np.ndarray, csr_matrix]) -> csr_matrix:
-
+        """
+        Predicts tags for each sample in X.
+        For prediction the set of classifiers is traversed and each classifier
+        takes a decision of whether the instance belongs to its tag or not.
+        :param X: sparse feature representation of shape(n_samples, n_features)
+        :return: binary label matrix in sparse format
+        """
         if not hasattr(self, 'clf_store_'):
             raise NotFittedError
 
@@ -167,7 +210,13 @@ class OneVsAllLinearClf(BaseEstimator):
         return y_pred_transposed.T.tocsr()
 
     def predict_proba(self, X: Union[np.ndarray, csr_matrix]) -> np.ndarray:
-
+        """
+        Acts mostly similar to the predict function but returns a label matrix
+        containing the probability of each tag containing to the sample.
+        Note this method is only available if the base classifier provides a predict_proba method.
+        :param X: sparse feature representation of shape(n_samples, n_features)
+        :return: label matrix with probabilities instead of binary indicators
+        """
         if not hasattr(self.clf_store_[0], 'predict_proba'):
             raise Exception('Base classifier does not support probability predictions')
 
@@ -191,6 +240,13 @@ class OneVsAllLinearClf(BaseEstimator):
         return np.array(y_pred).T
 
     def decision_function(self, X: Union[csr_matrix, np.ndarray]) -> np.ndarray:
+        """
+        Acts mostly similar to the predict function but returns a label matrix
+        containing the decision value of each tag containing to the sample.
+        Note this method is only available if the base classifier provides a decision_function method.
+        :param X: sparse feature representation of shape(n_samples, n_features)
+        :return: label matrix with decision values instead of binary indicators
+        """
         if not hasattr(self, 'clf_store_'):
             raise NotFittedError
 
