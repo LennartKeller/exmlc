@@ -16,7 +16,24 @@ from tqdm import tqdm
 
 class OneVsAllLinearClf(BaseEstimator):
     """
-    TODO
+    This methods implements one of the most basic problem transformation approaches
+    for multilabel classification tasks.
+    The one vs all method trains a classifier for each tag in the train set
+    to make a binary decision of whether given sample belongs to the tag or not.
+    While this methods performs very good in most cases and it scales with the number of labels
+    and thus is often computationally infeasible on extreme multilabel classification scale datasets.
+    This is problem not only concerns the memory usage but also the time required for training and often more important
+    the time for computing the predictions since for each new instance to predict the whole set of classifiers has to be
+    evaluated.
+
+    In order to overcome or least weaken the constraint of memory usage of the one vsl all approach
+    this implementation makes use of scikit-learns ability to convert the coefficient matrices
+    of fitted linear models from dense to sparse format in order to decrease the memory usage.
+
+    Obviously the limitation on linear classification models restricts the theoretical performance
+    of this approach but in case of text classification which is the most probable use case of exmlc
+    linear methods such as an support vector machine with a linear kernel are empirically proven
+    to perform quiet well.
     """
 
     def __init__(self,
