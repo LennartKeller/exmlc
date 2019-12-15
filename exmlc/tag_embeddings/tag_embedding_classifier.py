@@ -109,7 +109,7 @@ class TagEmbeddingClassifier(BaseEstimator):
     def predict(self, X: Iterable[str], n_labels=10) -> np.array:
         """
         Predicts n labels for every document in X.
-        Therefore a embedding for each doc in X is computed.
+        Therefore a embedding for each doc in X is computed using gensims Doc2Vec class.
         After that a k nearest neighbor search is used to find the n most close tag embedding in the embedding space.
         :param X: new Document to be tagged
         :param n_labels: the desired number of tags for each text
