@@ -13,6 +13,31 @@ from tqdm import tqdm
 
 
 class TagEmbeddingClassifier(BaseEstimator):
+    """
+    This Classifiers computes "tag-embeddings" from by using texts assigned to the tags
+    as described by Chen et. al (2017)
+    Link: https://pdfs.semanticscholar.org/2301/98d3b8ad550aaa77d28155091cc8a3d4032d.pdf
+
+    Please note that this classifier does not implement the main method described in this paper
+    but the much simpler baseline model which they use for performance evaluation of their postulated method.
+
+    This model uses the "gensim" library for computing the tag-embedding
+    and the NearestNeighbors model from "scikit-learn" for finding similar tags at prediction.
+
+    Training:
+    Each text which is assigned to a specific tag from the train data
+    is concatenated and then document embeddings are trained on these collections of text.
+    So these each of this document-vectors represent a tag and therefore will here be referred as tag-embeddings.
+
+    Prediction:
+    Document embeddings for the new texts are computed using the trained embedding-model.
+    Then a k-nearest neighbor search is performed in order to find the most similar tags-embeddings.
+
+    Parameters:
+    This model is highly flexible because it not only has a lot of parameters which can be fine tuned
+    but the embedding process could be exchanged completely by another more sophisticated one.
+    For more information about the parameters please refer to the constructor method.
+    """
 
     def __init__(self,
                  embedding_dim: int = 300,
@@ -23,6 +48,20 @@ class TagEmbeddingClassifier(BaseEstimator):
                  n_jobs: int = 1,
                  verbose: bool = False):
 
+        """
+        Constructor of the TagEmbedding Mode class
+        :param embedding_dim: the number of dimension a computed tag embedding will have
+        :param window_size: the size of the sliding window for computing the word embeddings
+        that will be used to compute the tag embeddings
+        :param min_count: minimum number of occurrences a word must have in order
+        to be used for computing the tag embeddings
+        :param epochs: number of epochs (complete iterations over the whole train data)
+        when computing the tag emebeddings
+        :param distance_metric: the distane metric for finding similar tags in the vector space
+        :param n_jobs: number of cores to use for training the model (-1 means all available cores)
+        :param verbose: wether or not information while training should be printed
+        """
+
         self.embedding_dim = embedding_dim
         self.window_size = window_size
         self.min_count = min_count
@@ -32,6 +71,12 @@ class TagEmbeddingClassifier(BaseEstimator):
         self.verbose = verbose
 
     def fit(self, X: Union[np.ndarray, csr_matrix], y: csr_matrix) -> TagEmbeddingClassifier:
+        """
+
+        :param X:
+        :param y:
+        :return:
+        """
 
         self.n_tags_ = y.shape[1]
 
