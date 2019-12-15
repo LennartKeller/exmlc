@@ -110,10 +110,10 @@ class TagEmbeddingClassifier(BaseEstimator):
         """
         Predicts n labels for every document in X.
         Therefore a embedding for each doc in X is computed.
-        After that a k nearest neighbor search is used to find the n most close tag embedding in the embedding space
+        After that a k nearest neighbor search is used to find the n most close tag embedding in the embedding space.
         :param X: new Document to be tagged
         :param n_labels: the desired number of tags for each text
-        :return: a label matrix of shape (len(X), self.n_tags)
+        :return: a binary label matrix of shape (len(X), self.n_tags)
         """
         if not hasattr(self, 'doc_embeddings_'):
             raise NotFittedError
@@ -134,13 +134,14 @@ class TagEmbeddingClassifier(BaseEstimator):
 
     def decision_function(self, X: Iterable[str], n_labels: int = 10):
         """
-        This method is similar to the predict method.
-        But instead of returning a binary label matrix it returns a label matrix
-         where each entry for a predicted tag is the distance in between the embedding document and the tag embedding.
-        Returns the distances to each predicted tag
-        :param X:
-        :param n_labels:
-        :return:
+        Returns the distances to each predicted tag.
+        This does mostly the same as the predict method but instead of returning a binary label matrix
+        it returns a label matrix where each entry for a predicted tag is the distance
+        between the embedding document and the tag embedding.
+        Please note that only the distances between the n_labels most similar tags are computed.
+        :param X: new Document to be tagged
+        :param n_labels: the desired number of tags for each text
+        :return: a label matrix of shape (len(X), self.n_tags) with the distances instead of binary indicators
         """
         if not hasattr(self, 'doc_embeddings_'):
             raise NotFittedError
@@ -223,11 +224,15 @@ class TagEmbeddingClassifier(BaseEstimator):
             yield TaggedDocument(words=doc.split(' '), tags=[tag_id])
 
     def _infer_new_docs(self, X: Iterable[str]) -> np.ndarray:
-        # infer new doc to obtain vector
+        """
+        Computes a embedding for new document at prediction.
+        :param X: the documents to predict tags
+        :return: Iterable of new embeddings for each document in X
+        """
         sample_doc_embeddings = []
         for sample in X:
             sample_doc_embeddings.append(self.doc2vec_model_.infer_vector(sample.split()))
-        return sample_doc_embeddings
+        return sample_doc_embeddings  # TODO can this be casted to a np.array?
 
     def _get_log_distances(self, y_distances: csr_matrix, base=0.5) -> csr_matrix:
 
