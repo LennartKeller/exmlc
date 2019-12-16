@@ -74,7 +74,7 @@ class OneVsAllLinearClf(BaseEstimator):
         :param clf: base classifier used for each tag
         Defaults to a linear support vector machine which is trained using stochastic gradient descent.
         :param sparsify: whether or not the coefficient should be converted to sparse formatted after fitting
-        :param n_jobs: Number of cores to use while training each clf
+        :param n_jobs: Number of cores to use while training each classifier
         :param verbose: Whether or not to print information while training and prediction
         """
         self.base_clf = clf
@@ -91,7 +91,7 @@ class OneVsAllLinearClf(BaseEstimator):
         """
         Fits the model.
         For each tag in the training data a binary classifier model is trained.
-        If sparsify is True the coefficient matrix of a trained instance will be formatted to sparse format
+        If sparsify is True the coefficient matrix of a fitted instance will be converted to sparse format
         which decreases the memory usage significantly.
         :param X: Features in sparse representation of shape (n_samples, n_features)
         :param y: sparse binary label matrix of shape (n_samples, n_labels)
