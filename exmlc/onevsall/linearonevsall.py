@@ -16,15 +16,15 @@ from tqdm import tqdm
 
 class OneVsAllLinearClf(BaseEstimator):
     """
-    This methods implements one of the most basic problem transformation approaches
+    This class implements one of the most basic problem transformation approaches
     for multilabel classification tasks.
     The one vs all method trains a classifier for each tag in the train set
     to make a binary decision of whether given sample belongs to the tag or not.
-    At prediction for one sample each classifier is evaluated to obtain the tags.
+    At prediction each classifier is evaluated to obtain the tags.
     While this method performs very good in most cases it scales with the number of labels
-    and thus is often computationally infeasible on extreme multilabel classification scale datasets.
+    and thus is often computationally infeasible on datasets of extreme multilabel classification scale.
     This problem not only concerns the memory usage but also the time required for training and often more important
-    the time for computing the predictions since for each instance at prediction the whole set of classifiers has to be
+    the prediction time since for each instance the whole set of classifiers has to be
     evaluated.
 
     The model itself does not have any parameters for fine-tuning,
@@ -37,7 +37,7 @@ class OneVsAllLinearClf(BaseEstimator):
     this implementation makes use of scikit-learns ability to convert the coefficient matrices
     of fitted linear models from dense to sparse format in order to decrease the memory usage.
 
-    Also while training the classifiers multi-threading used in order to speed up this process.
+    Also while training the classifiers multi-threading is used in order to speed up this process.
 
     Obviously the limitation on linear classification models restricts the theoretical performance
     of this approach. But in the case of text classification which is the most probable use cases of exmlc
@@ -54,7 +54,7 @@ class OneVsAllLinearClf(BaseEstimator):
     but in a very heavy tailed manner.
     This means that there is small of number of labels which occur very often while
     the majority of labels is only used very rarely (often not more than once or twice).
-    Hence learning to assign the rare labels correctly is very hard.
+    Hence learning to assign the rare labels correctly is challenging.
     Even though this is a general problem shared by all extreme multilabel classification approaches
     in this case it is reinforced by the fact that by dividing the data
     into a set of binary classification decisions the imbalance is increased since even the most common
@@ -72,6 +72,7 @@ class OneVsAllLinearClf(BaseEstimator):
         """
         Constructor of the OneVsAllLinearClf class
         :param clf: base classifier used for each tag
+        Defaults to a linear support vector machine which is trained using stochastic gradient descent.
         :param sparsify: whether or not the coefficient should be converted to sparse formatted after fitting
         :param n_jobs: Number of cores to use while training each clf
         :param verbose: Whether or not to print information while training and prediction
@@ -79,7 +80,7 @@ class OneVsAllLinearClf(BaseEstimator):
         self.base_clf = clf
         self.sparsify = sparsify
 
-        if n_jobs == -1:
+        if n_jobs < 0:
             self.n_jobs = cpu_count()
         else:
             self.n_jobs = n_jobs
