@@ -80,7 +80,7 @@ class OneVsAllLinearClf(BaseEstimator):
         self.base_clf = clf
         self.sparsify = sparsify
 
-        if n_jobs < 0:
+        if n_jobs < 1:
             self.n_jobs = cpu_count()
         else:
             self.n_jobs = n_jobs
