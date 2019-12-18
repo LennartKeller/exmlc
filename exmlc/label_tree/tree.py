@@ -44,7 +44,7 @@ class HuffmanNode:
     def fit_clf(self, X: Union[np.ndarray, csr_matrix], y: Union[np.ndarray, csr_matrix]) -> None:
         """
         Wrapper method for for fitting the node classifier at training.
-        Even though it could be directly fitted by accessing the clf Attrribute this method
+        Even though it could be directly fitted by accessing the clf ttrribute this method
         contains exception handling for the case that the labels of the instance do not hold any train data.
         :param X: Features in sparse representation of shape (n_samples, n_features)
         :param y: binary vector of shape(n_samples,) indicating

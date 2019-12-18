@@ -38,6 +38,22 @@ class TagEmbeddingClassifier(BaseEstimator):
     Prediction:
     Document embeddings for the new texts are computed using the trained embedding-model.
     Then a k-nearest neighbor search is performed in order to find the most similar tags-embeddings.
+
+    In general embeddings are a technique to embed objects into a vector space of a distinct dimension
+    such that similar objects appear nearby in the vector space.
+    Wordembeddings are a unsupervised learning techniques which aims at computing vector representations for words.
+    The goal is that the vectors hold some sort of semantic information so that semantically related words appear
+    clustered in the vector space. Hence a single word vector alone does not provide any useful or
+    even meaningful information about the semantic dimensions of a word
+    but a set of words is needed to evaluate the embeddings.
+
+    The idea to model language in a vector space had its first appearance in the field of information retrieval where
+    documents where modelled as vectors containing word frequencies in order to find documents which share similar
+    contents. Later this approach was advanced by latent semantic indexing which does not try to find similarities
+    between documents based on their words but based on abstract underlying topics which can be extracting using
+    mathematical methods such as single value decomposition.
+
+    Th
     """
 
     def __init__(self,
