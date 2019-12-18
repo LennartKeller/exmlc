@@ -78,7 +78,6 @@ class PLTClassifier(BaseEstimator):
             use_probs = self.use_probs
 
         y_pred = []
-        X_length = X.shape[0]
 
         if self.verbose:
             data_iterator = tqdm(enumerate(X), total=X.shape[0])
