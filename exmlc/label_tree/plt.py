@@ -238,6 +238,7 @@ class PLTClassifier(BaseEstimator):
         TODO finalize this as soon as possible
         :param tree: huffman label tree
         :param x: single instance of the data to predict
+        :param use_probs:
         :return: numpy array containing the label indices.
         """
 
@@ -260,7 +261,11 @@ class PLTClassifier(BaseEstimator):
             new_prev_prob = prob * prev_prob
 
             if not current_node.is_leaf():
-                fifo.extendleft(((children, pr) for children, pr in zip(current_node.get_children(), repeat(new_prev_prob))))
+                fifo.extendleft(
+                    (
+                        (children, pr) for children, pr in zip(current_node.get_children(), repeat(new_prev_prob))
+                    )
+                )
 
             if current_node.is_leaf():
                 if len(current_node.label_idx) != 1:
