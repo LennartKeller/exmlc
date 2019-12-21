@@ -174,7 +174,7 @@ class TagEmbeddingClassifier(BaseEstimator):
             raise NotFittedError
 
         new_doc_embeddings = self._infer_new_docs(X)
-        knn = NearestNeighbors(n_neighbors=n_labels, metric=self.distance_metric)
+        knn = NearestNeighbors(n_neighbors=n_labels, metric=self.distance_metric, n_jobs=self.n_jobs)
         knn.fit(self.doc_embeddings_)
         X_nearest_neighbors = []
         for emb in new_doc_embeddings:
