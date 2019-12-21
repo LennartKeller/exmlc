@@ -305,7 +305,9 @@ if __name__ == '__main__':  # used for debugging and testing ...
 
     import pandas as pd
     from exmlc.preprocessing import clean_string
+    from sklearn.metrics import f1_score
     df = pd.read_csv('~/ba_arbeit/BA_Code/data/Stiwa/df_5.csv').dropna(subset=['keywords', 'text'])
+    df, df_remove = train_test_split(df, test_size=0.9, random_state=42)
     df.keywords = df.keywords.apply(lambda x: x.split('|'))
     df.text = df.text.apply(lambda x: clean_string(x, drop_stopwords=True))
     df_train, df_test = train_test_split(df, test_size=0.2, random_state=42)
@@ -316,10 +318,12 @@ if __name__ == '__main__':  # used for debugging and testing ...
     y_train = mlb.fit_transform(df_train.keywords)
     y_test = mlb.transform(df_test.keywords)
 
-    tec = TagEmbeddingClassifier(n_jobs=8)
+    tec = TagEmbeddingClassifier(min_count=5, window_size=5, embedding_dim=300, epochs=20, n_jobs=4)
 
     print('Start training')
     tec.fit(X_train, y_train)
     print(tec)
     print('Start predicting')
-    pred = tec.predict(X_test, n_labels=2)
+    pred = tec.predict(X_test, n_labels=20)
+    print(f1_score(y_test, pred, average='macro'))
+
