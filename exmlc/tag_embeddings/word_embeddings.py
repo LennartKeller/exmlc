@@ -218,11 +218,16 @@ if __name__ == '__main__':
     y_train = mlb.fit_transform(df_train.keywords)
     y_test = mlb.transform(df_test.keywords)
 
-    clf = Word2VecTagEmbeddingClassifier(embedding_dim=300, min_count=5,
+    clf = Word2VecTagEmbeddingClassifier(embedding_dim=300,
+                                         min_count=5,
+                                         model='fasttext',
                                          epochs=20,
-                                         window_size=5, tfidf_weighting=True, verbose=True, n_jobs=4)
+                                         window_size=5,
+                                         tfidf_weighting=True,
+                                         verbose=True,
+                                         n_jobs=4)
     clf.fit(X_train, y_train)
-    y_pred = clf.predict(X_test, n_labels=5)
+    y_pred = clf.predict(X_test, n_labels=20)
 
     print(f1_score(y_test, y_pred, average='macro'))
 

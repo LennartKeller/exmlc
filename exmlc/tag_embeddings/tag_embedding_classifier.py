@@ -311,14 +311,19 @@ if __name__ == '__main__':  # used for debugging and testing ...
     df.keywords = df.keywords.apply(lambda x: x.split('|'))
     df.text = df.text.apply(lambda x: clean_string(x, drop_stopwords=True))
     df_train, df_test = train_test_split(df, test_size=0.2, random_state=42)
-    X_train = df_train.text.tolist()
-    X_test = df_test.text.tolist()
+    X_train = df_train.text.to_numpy()
+    X_test = df_test.text.to_numpy()
 
     mlb = MultiLabelBinarizer(sparse_output=True)
     y_train = mlb.fit_transform(df_train.keywords)
     y_test = mlb.transform(df_test.keywords)
 
-    tec = TagEmbeddingClassifier(min_count=5, window_size=5, embedding_dim=300, epochs=20, n_jobs=4)
+    tec = TagEmbeddingClassifier(min_count=5,
+                                 window_size=5,
+                                 embedding_dim=300,
+                                 epochs=20,
+                                 n_jobs=4,
+                                 verbose=True, additional_doc2vec_params={'dm': 0})
 
     print('Start training')
     tec.fit(X_train, y_train)
