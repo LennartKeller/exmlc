@@ -94,7 +94,7 @@ class Word2VecTagEmbeddingClassifier(BaseEstimator):
                     try:
                         word_embedding = self.wv_model_.wv[token]
                     except KeyError:
-                        raise Exception("This should not appear") # TODO fix it
+                        # if words occur that are ignored due to min_count
                         continue
                     if self.tfidf_weighting:
                         token_ind = self.tfidf_.vocabulary_.get(token, -1)
