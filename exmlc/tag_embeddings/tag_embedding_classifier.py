@@ -77,7 +77,7 @@ class TagEmbeddingClassifier(BaseEstimator):
         when computing the tag embeddings
         :param distance_metric: the distane metric for finding similar tags in the vector space
         :param n_jobs: number of cores to use for training the model (-1 means all available cores)
-        :param verbose: wether or not information while training should be printed
+        :param verbose: whether or not information while training should be printed
         """
 
         self.embedding_dim = embedding_dim
@@ -173,7 +173,7 @@ class TagEmbeddingClassifier(BaseEstimator):
         if not hasattr(self, 'doc_embeddings_'):
             raise NotFittedError
 
-        new_doc_embeddings = self._infer_new_docs(X, epochs=self.epochs)
+        new_doc_embeddings = self._infer_new_docs(X)
         knn = NearestNeighbors(n_neighbors=n_labels, metric=self.distance_metric)
         knn.fit(self.doc_embeddings_)
         X_nearest_neighbors = []
@@ -258,7 +258,7 @@ class TagEmbeddingClassifier(BaseEstimator):
         """
         sample_doc_embeddings = []
         for sample in X:
-            sample_doc_embeddings.append(self.doc2vec_model_.infer_vector(sample.split()))
+            sample_doc_embeddings.append(self.doc2vec_model_.infer_vector(sample.split(), epochs=self.epochs))
         return sample_doc_embeddings  # TODO can this be casted to a np.array?
 
     def _get_log_distances(self, y_distances: csr_matrix, base=0.5) -> csr_matrix:
