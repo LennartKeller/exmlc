@@ -26,7 +26,6 @@ class TagEmbeddingClassifier(BaseEstimator):
 
     In theory this model is highly flexible because it not only has a lot of parameters which can be fine tuned
     But in practice as of now the performance is rather poor.
-    TODO Do last hyperparameter search.
 
     For more information about the parameters please refer to the constructor method.
 
