@@ -68,6 +68,7 @@ class PLTClassifier(BaseEstimator):
         """
         TODO
         :param X:
+        :param use_probs:
         :return:
         """
 
