@@ -197,7 +197,7 @@ class TagEmbeddingClassifier(BaseEstimator):
         Each text associated with one tag is concatenated to one big document.
         :param X: Iterable of the texts as string
         :param tag_doc_idx: Mapping of each label to their associated texts
-        :return: array of shape (n_tags,) containing the texts
+        :return: list of shape (n_tags,) containing the texts
         """
         tag_corpus = list()
         if self.verbose:
@@ -207,9 +207,9 @@ class TagEmbeddingClassifier(BaseEstimator):
             iterator = tag_doc_idx
         for indices in iterator:
             tag_corpus.append(" ".join(X[indices]))
-        return np.asarray(tag_corpus)
+        return tag_corpus
 
-    def _tagged_document_generator(self, tag_corpus: np.array) -> Generator[TaggedDocument, None, None]:
+    def _tagged_document_generator(self, tag_corpus: list) -> Generator[TaggedDocument, None, None]:
         """
         Generator yielding the tagged document object required by gensim.
         :param tag_corpus: the corpus of tags and their texts
@@ -221,7 +221,7 @@ class TagEmbeddingClassifier(BaseEstimator):
         else:
             iterator = enumerate(tag_corpus)
         for tag_id, doc in iterator:
-            yield TaggedDocument(words=doc.split(' '), tags=[tag_id])
+            yield TaggedDocument(words=doc.split(), tags=[tag_id])
 
     def _infer_new_docs(self, X: Iterable[str]) -> np.ndarray:
         """
