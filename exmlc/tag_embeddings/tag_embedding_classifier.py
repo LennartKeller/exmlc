@@ -21,11 +21,12 @@ class TagEmbeddingClassifier(BaseEstimator):
     Please note that this classifier does not implement the main method described in this paper
     but the much simpler baseline model which they use for performance evaluation of their postulated method.
 
-    This model uses the "gensim" library for computing the tag-embedding
-    and the NearestNeighbors model from "scikit-learn" for finding similar tags at prediction.
+    This model uses the gensim library and its implementation
+    of doc2vec (Mikolov et. al: https://arxiv.org/pdf/1405.4053v2.pdf) for computing the tag-embeddings
+    and the NearestNeighbors model from scikit-learn for getting the most similar tags at prediction.
 
     In theory this model is highly flexible because it not only has a lot of parameters which can be fine tuned
-    But in practice as of now the performance is rather poor.
+    But in practice as of now the performance is rather poor (yielding often not more than 25% precision@3).
 
     For more information about the parameters please refer to the constructor method.
 
@@ -40,16 +41,16 @@ class TagEmbeddingClassifier(BaseEstimator):
 
     In general embeddings are a technique to embed objects into a vector space of a distinct dimension
     such that similar objects appear nearby in the vector space.
-    Wordembeddings are a unsupervised learning techniques which aims at computing vector representations for words.
-    The goal is that the vectors hold some sort of semantic information so that semantically related words appear
-    clustered in the vector space. Hence a single word vector alone does not provide any useful or
+    word-embeddings are a unsupervised learning techniques which aims at computing vector representations for words.
+    The goal is that the vectors hold some sort of semantic information so that semantically related words also appear
+    nearby in the vector space. Hence a single word vector alone does not provide any useful or
     even meaningful information about the semantic dimensions of a word
     but a set of words is needed to evaluate the embeddings.
 
     The idea to model language in a vector space had its first appearance in the field of information retrieval where
     documents where modelled as vectors containing word frequencies in order to find documents which share similar
     contents. Later this approach was advanced by latent semantic indexing which does not try to find similarities
-    between documents based on their words but based on abstract underlying topics which can be extracting using
+    between documents based on their words but based on abstract underlying topics which can be extracted using
     mathematical methods such as single value decomposition.
 
     Th
@@ -60,6 +61,7 @@ class TagEmbeddingClassifier(BaseEstimator):
                  window_size: int = 5,
                  min_count: int = 2,
                  epochs: int = 10,
+                 additional_doc2vec_params: dict = None,
                  distance_metric: str = 'cosine',
                  n_jobs: int = 1,
                  verbose: bool = False):
@@ -85,6 +87,7 @@ class TagEmbeddingClassifier(BaseEstimator):
         self.distance_metric = distance_metric
         self.n_jobs = n_jobs
         self.verbose = verbose
+        self.additional_doc2vec_params = additional_doc2vec_params
 
     def fit(self, X: np.array, y: csr_matrix) -> TagEmbeddingClassifier:
         """
@@ -110,12 +113,21 @@ class TagEmbeddingClassifier(BaseEstimator):
             logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
 
         # train model
-        self.doc2vec_model_ = Doc2Vec(tagged_docs,
-                                      vector_size=self.embedding_dim,
-                                      window=self.window_size,
-                                      min_count=self.min_count,
-                                      workers=self.n_jobs,
-                                      epochs=self.epochs)
+        if not self.additional_doc2vec_params:
+            self.doc2vec_model_ = Doc2Vec(tagged_docs,
+                                          vector_size=self.embedding_dim,
+                                          window=self.window_size,
+                                          min_count=self.min_count,
+                                          workers=self.n_jobs,
+                                          epochs=self.epochs)
+        else:
+            self.doc2vec_model_ = Doc2Vec(tagged_docs,
+                                          vector_size=self.embedding_dim,
+                                          window=self.window_size,
+                                          min_count=self.min_count,
+                                          workers=self.n_jobs,
+                                          epochs=self.epochs,
+                                          **self.additional_doc2vec_params)
 
         self.doc_embeddings_ = self.doc2vec_model_.docvecs.vectors_docs.copy()
 
@@ -161,7 +173,7 @@ class TagEmbeddingClassifier(BaseEstimator):
         if not hasattr(self, 'doc_embeddings_'):
             raise NotFittedError
 
-        new_doc_embeddings = self._infer_new_docs(X)
+        new_doc_embeddings = self._infer_new_docs(X, epochs=self.epochs)
         knn = NearestNeighbors(n_neighbors=n_labels, metric=self.distance_metric)
         knn.fit(self.doc_embeddings_)
         X_nearest_neighbors = []
