@@ -87,14 +87,14 @@ class TagEmbeddingClassifier(BaseEstimator):
         self.n_jobs = n_jobs
         self.verbose = verbose
 
-    def fit(self, X: Union[np.ndarray, csr_matrix], y: csr_matrix) -> TagEmbeddingClassifier:
+    def fit(self, X: np.array, y: csr_matrix) -> TagEmbeddingClassifier:
         """
         Fits the model.
         First the train data will grouped by the tags.
         Then the embeddings are trained.
         The trained embeddings are bound to the doc_embeddings_ attribute
         The number of tags in the training set will be bound to n_tags_
-        :param X: Iterable of documents as strings
+        :param X: numpy array of documents as strings
         :param y: label matrix in sparse format
         :return: fitted instance of itself
         """
@@ -184,7 +184,7 @@ class TagEmbeddingClassifier(BaseEstimator):
             raise NotFittedError
         # TODO Uncomment this if sure that nothing will break
         distances = self.decision_function(X=X, n_labels=n_labels)
-        log_distances = self._get_log_distances(X)
+        log_distances = self._get_log_distances(distances)
         return log_distances
 
     def _create_tag_docs(self, y: csr_matrix) -> np.ndarray:
@@ -213,7 +213,7 @@ class TagEmbeddingClassifier(BaseEstimator):
         Each text associated with one tag is concatenated to one big document.
         :param X: Iterable of the texts as string
         :param tag_doc_idx: Mapping of each label to their associated texts
-        :return: array of shape (n_tags,) containing the texts
+        :return: list of shape (n_tags,) containing the texts
         """
         tag_corpus = list()
         if self.verbose:
@@ -223,9 +223,9 @@ class TagEmbeddingClassifier(BaseEstimator):
             iterator = tag_doc_idx
         for indices in iterator:
             tag_corpus.append(" ".join(X[indices]))
-        return np.asarray(tag_corpus)
+        return tag_corpus
 
-    def _tagged_document_generator(self, tag_corpus: np.array) -> Generator[TaggedDocument, None, None]:
+    def _tagged_document_generator(self, tag_corpus: list) -> Generator[TaggedDocument, None, None]:
         """
         Generator yielding the tagged document object required by gensim.
         :param tag_corpus: the corpus of tags and their texts
@@ -237,7 +237,7 @@ class TagEmbeddingClassifier(BaseEstimator):
         else:
             iterator = enumerate(tag_corpus)
         for tag_id, doc in iterator:
-            yield TaggedDocument(words=doc.split(' '), tags=[tag_id])
+            yield TaggedDocument(words=doc.split(), tags=[tag_id])
 
     def _infer_new_docs(self, X: Iterable[str]) -> np.ndarray:
         """
@@ -292,7 +292,20 @@ if __name__ == '__main__':  # used for debugging and testing ...
     y_train = mb.fit_transform(y_train)
     y_test = mb.transform(y_test)
 
-    tec = TagEmbeddingClassifier()
+    import pandas as pd
+    from exmlc.preprocessing import clean_string
+    df = pd.read_csv('~/ba_arbeit/BA_Code/data/Stiwa/df_5.csv').dropna(subset=['keywords', 'text'])
+    df.keywords = df.keywords.apply(lambda x: x.split('|'))
+    df.text = df.text.apply(lambda x: clean_string(x, drop_stopwords=True))
+    df_train, df_test = train_test_split(df, test_size=0.2, random_state=42)
+    X_train = df_train.text.tolist()
+    X_test = df_test.text.tolist()
+
+    mlb = MultiLabelBinarizer(sparse_output=True)
+    y_train = mlb.fit_transform(df_train.keywords)
+    y_test = mlb.transform(df_test.keywords)
+
+    tec = TagEmbeddingClassifier(n_jobs=8)
 
     print('Start training')
     tec.fit(X_train, y_train)
