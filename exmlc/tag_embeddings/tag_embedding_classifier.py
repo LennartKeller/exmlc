@@ -168,7 +168,7 @@ class TagEmbeddingClassifier(BaseEstimator):
             raise NotFittedError
         # TODO Uncomment this if sure that nothing will break
         distances = self.decision_function(X=X, n_labels=n_labels)
-        log_distances = self._get_log_distances(X)
+        log_distances = self._get_log_distances(distances)
         return log_distances
 
     def _create_tag_docs(self, y: csr_matrix) -> np.ndarray:
