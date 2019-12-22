@@ -68,7 +68,7 @@ class Word2VecTagEmbeddingClassifier(BaseEstimator):
                 iter=self.epochs,
                 min_count=self.min_count,
                 window=self.window_size,
-                workers=self.n_jobs
+                workers=self.n_jobs,
             )
 
         else:
@@ -106,7 +106,7 @@ class Word2VecTagEmbeddingClassifier(BaseEstimator):
             self.tag_embeddings_[tag_id] = self.pooling_func(tag_word_embeddings)
         return self
 
-    def predict(self, X: List[str], n_labels: int =10) -> np.array:
+    def predict(self, X: List[str], n_labels: int = 10) -> np.array:
 
         if not hasattr(self, 'tag_embeddings_'):
             raise NotFittedError
@@ -134,6 +134,36 @@ class Word2VecTagEmbeddingClassifier(BaseEstimator):
             y_pred[sample_ind, nearest_neighbors] = 1
 
         return y_pred.tocsr()
+
+    def decision_function(self, X: List[str], n_labels: int = 10):
+        if not hasattr(self, 'tag_embeddings_'):
+            raise NotFittedError
+
+        X_splitted = [s.split() for s in X]
+        X_embeddings = []
+        for text in X_splitted:
+            text_word_embeddings = []
+            for token in text:
+                try:
+                    word_embedding = self.wv_model_.wv[token]
+                except KeyError:
+                    # TODO may some statistics here?
+                    continue
+                text_word_embeddings.append(word_embedding)
+            X_embeddings.append(self.pooling_func(text_word_embeddings))
+
+        nn = NearestNeighbors(metric=self.distance_metric, n_neighbors=n_labels, n_jobs=self.n_jobs)
+        nn.fit(self.tag_embeddings_)
+
+        y_pred = lil_matrix((len(X), self.tag_embeddings_.shape[0]), dtype='float')
+
+        for sample_ind, sample_vec in enumerate(X_embeddings):
+            distances, indices = nn.kneighbors([sample_vec])
+            for distance, label_index in zip(distances, indices):
+                y_pred[sample_ind, label_index] = distance
+
+        return y_pred.tocsr()
+
 
 
 
@@ -203,33 +233,36 @@ if __name__ == '__main__':
     y_train = mb.fit_transform(y_train)
     y_test = mb.transform(y_test)
 
-    import pandas as pd
-    from exmlc.preprocessing import clean_string
-    from sklearn.metrics import f1_score
-    df = pd.read_csv('~/ba_arbeit/BA_Code/data/Stiwa/df_5.csv').dropna(subset=['keywords', 'text'])
-    df, df_remove = train_test_split(df, test_size=0.9, random_state=42)
-    df.keywords = df.keywords.apply(lambda x: x.split('|'))
-    df.text = df.text.apply(lambda x: clean_string(x, drop_stopwords=True))
-    df_train, df_test = train_test_split(df, test_size=0.2, random_state=42)
-    X_train = df_train.text.tolist()
-    X_test = df_test.text.tolist()
-
-    mlb = MultiLabelBinarizer(sparse_output=True)
-    y_train = mlb.fit_transform(df_train.keywords)
-    y_test = mlb.transform(df_test.keywords)
+    # import pandas as pd
+    # from exmlc.preprocessing import clean_string
+    # from sklearn.metrics import f1_score
+    # df = pd.read_csv('~/ba_arbeit/BA_Code/data/Stiwa/df_5.csv').dropna(subset=['keywords', 'text'])
+    # df, df_remove = train_test_split(df, test_size=0.9, random_state=42)
+    # df.keywords = df.keywords.apply(lambda x: x.split('|'))
+    # df.text = df.text.apply(lambda x: clean_string(x, drop_stopwords=True))
+    # df_train, df_test = train_test_split(df, test_size=0.2, random_state=42)
+    # X_train = df_train.text.tolist()
+    # X_test = df_test.text.tolist()
+    #
+    # mlb = MultiLabelBinarizer(sparse_output=True)
+    # y_train = mlb.fit_transform(df_train.keywords)
+    # y_test = mlb.transform(df_test.keywords)
 
     clf = Word2VecTagEmbeddingClassifier(embedding_dim=300,
-                                         min_count=5,
-                                         model='fasttext',
-                                         epochs=20,
+                                         min_count=0,
+                                         model='doc2vec',
+                                         epochs=1,
                                          window_size=5,
-                                         tfidf_weighting=True,
+                                         tfidf_weighting=False,
                                          verbose=True,
                                          n_jobs=4)
     clf.fit(X_train, y_train)
-    y_pred = clf.predict(X_test, n_labels=20)
+    y_scores = clf.decision_function(X_test, n_labels=30)
 
-    print(f1_score(y_test, y_pred, average='macro'))
+    print(y_pred.todense())
+    print(y_scores.todense())
+
+    #print(f1_score(y_test, y_pred, average='macro'))
 
 
 
