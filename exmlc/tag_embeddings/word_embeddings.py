@@ -119,7 +119,6 @@ class Word2VecTagEmbeddingClassifier(BaseEstimator):
                 try:
                     word_embedding = self.wv_model_.wv[token]
                 except KeyError:
-                    # TODO may some statistics here?
                     continue
                 text_word_embeddings.append(word_embedding)
             X_embeddings.append(self.pooling_func(text_word_embeddings))
@@ -147,7 +146,6 @@ class Word2VecTagEmbeddingClassifier(BaseEstimator):
                 try:
                     word_embedding = self.wv_model_.wv[token]
                 except KeyError:
-                    # TODO may some statistics here?
                     continue
                 text_word_embeddings.append(word_embedding)
             X_embeddings.append(self.pooling_func(text_word_embeddings))
@@ -164,8 +162,27 @@ class Word2VecTagEmbeddingClassifier(BaseEstimator):
 
         return y_pred.tocsr()
 
+    def log_decision_function(self, X: Iterable[str], n_labels: int = 10):
+        if not hasattr(self, 'tag_embeddings_'):
+            raise NotFittedError
+        # TODO Uncomment this if sure that nothing will break
+        distances = self.decision_function(X=X, n_labels=n_labels)
+        log_distances = self._get_log_distances(distances)
+        return log_distances
 
+    def _get_log_distances(self, y_distances: csr_matrix, base=0.5) -> csr_matrix:
+        """
+        Returns the logarithmic version (base default: 0.5) of the distance matrix returned by TODO.
+        This must be used in order to compute valid precision@k scores
+        since small Distances should be ranked better than great ones.
+        :param y_distances: sparse distance matrix (multilabel matrix with distances instead of binary indicators)
+        :param base: base of the log function (must be smaller then one)
+        :return: sparse matrix with the log values
+        """
 
+        log_y_distances = y_distances.tocoo()
+        log_y_distances.data = np.log(log_y_distances.data) / np.log(base)
+        return log_y_distances.tocsr()
 
     def _create_tag_docs(self, y: csr_matrix) -> np.ndarray:
         """
@@ -233,36 +250,31 @@ if __name__ == '__main__':
     y_train = mb.fit_transform(y_train)
     y_test = mb.transform(y_test)
 
-    # import pandas as pd
-    # from exmlc.preprocessing import clean_string
-    # from sklearn.metrics import f1_score
-    # df = pd.read_csv('~/ba_arbeit/BA_Code/data/Stiwa/df_5.csv').dropna(subset=['keywords', 'text'])
-    # df, df_remove = train_test_split(df, test_size=0.9, random_state=42)
-    # df.keywords = df.keywords.apply(lambda x: x.split('|'))
-    # df.text = df.text.apply(lambda x: clean_string(x, drop_stopwords=True))
-    # df_train, df_test = train_test_split(df, test_size=0.2, random_state=42)
-    # X_train = df_train.text.tolist()
-    # X_test = df_test.text.tolist()
-    #
-    # mlb = MultiLabelBinarizer(sparse_output=True)
-    # y_train = mlb.fit_transform(df_train.keywords)
-    # y_test = mlb.transform(df_test.keywords)
+    import pandas as pd
+    from exmlc.preprocessing import clean_string
+    from exmlc.metrics import sparse_average_precision_at_k
+    df = pd.read_csv('~/ba_arbeit/BA_Code/data/Stiwa/df_5.csv').dropna(subset=['keywords', 'text'])
+    #df, df_remove = train_test_split(df, test_size=0.9, random_state=42)
+    df.keywords = df.keywords.apply(lambda x: x.split('|'))
+    df.text = df.text.apply(lambda x: clean_string(x, drop_stopwords=True))
+    df_train, df_test = train_test_split(df, test_size=0.2, random_state=42)
+    X_train = df_train.text.tolist()
+    X_test = df_test.text.tolist()
+
+    mlb = MultiLabelBinarizer(sparse_output=True)
+    y_train = mlb.fit_transform(df_train.keywords)
+    y_test = mlb.transform(df_test.keywords)
 
     clf = Word2VecTagEmbeddingClassifier(embedding_dim=300,
-                                         min_count=0,
+                                         min_count=5,
                                          model='doc2vec',
-                                         epochs=1,
+                                         epochs=20,
                                          window_size=5,
                                          tfidf_weighting=False,
                                          verbose=True,
                                          n_jobs=4)
+
     clf.fit(X_train, y_train)
-    y_scores = clf.decision_function(X_test, n_labels=30)
+    y_scores = clf.log_decision_function(X_test, n_labels=10)
 
-    print(y_pred.todense())
-    print(y_scores.todense())
-
-    #print(f1_score(y_test, y_pred, average='macro'))
-
-
-
+    print(sparse_average_precision_at_k(y_test, y_scores, k=3))
