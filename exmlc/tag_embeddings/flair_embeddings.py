@@ -100,7 +100,13 @@ class FlairEmbeddingsClassifier(BaseEstimator):
         for doc in X_iterator:
             doc_obj = Sentence(doc)
             self.document_embedder_.embed(doc_obj)
-            X_embeddings.append(doc_obj.get_embedding().detach().numpy())
+            try:
+                X_embeddings.append(doc_obj.get_embedding().detach().numpy())
+            except RuntimeError as e:
+                print('Could no compute embedding for sample inserting zero vector')
+                # TODO give index of corrupted sample
+                print(e)
+                X_embeddings.append(np.zeros((self.tag_embeddings_[1], ), dtype=self.tag_embeddings_.dtype))
 
         nn = NearestNeighbors(metric=self.distance_metric, n_neighbors=n_labels, n_jobs=self.n_jobs)
         nn.fit(self.tag_embeddings_)
@@ -220,6 +226,6 @@ if __name__ == '__main__':
     clf = FlairEmbeddingsClassifier(verbose=True, n_jobs=4)
 
     clf.fit(X_train, y_train)
-    y_scores = clf.log_decision_function(X_test, n_labels=1)
+    y_scores = clf.log_decision_function(X_test, n_labels=20)
 
     print(sparse_average_precision_at_k(y_test, y_scores, k=3))
