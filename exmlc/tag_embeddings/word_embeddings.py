@@ -204,24 +204,6 @@ class Word2VecTagEmbeddingClassifier(BaseEstimator):
             tag_doc_idx.append(pos_samples)
         return np.asarray(tag_doc_idx)
 
-    def _create_tag_corpus(self, X: np.array, tag_doc_idx: np.array) -> List[str]:
-        """
-        Creates the corpus used to train the tag embeddings.
-        Each text associated with one tag is concatenated to one big document.
-        :param X: Iterable of the texts as string
-        :param tag_doc_idx: Mapping of each label to their associated texts
-        :return: list of shape (n_tags,) containing the texts
-        """
-        tag_corpus = list()
-        if self.verbose:
-            print('Creating Tag-Doc Corpus')
-            iterator = tqdm(tag_doc_idx)
-        else:
-            iterator = tag_doc_idx
-        for indices in iterator:
-            tag_corpus.append(" ".join(X[indices]))
-        return tag_corpus
-
 
 if __name__ == '__main__':
 

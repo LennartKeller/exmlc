@@ -18,12 +18,14 @@ class FlairEmbeddingsClassifier(BaseEstimator):
     def __init__(self,
                  word_embeddings: List[Embeddings] = (WordEmbeddings('de'), WordEmbeddings('de-crawl')),
                  pooling: str = 'mean',
+                 fine_tune_mode: str = 'nonlinear',
                  distance_metric: str = 'cosine',
                  n_jobs: int = 1,
                  verbose: bool = False):
 
         self.word_embeddings = word_embeddings
         self.pooling = pooling
+        self.fine_tune_mode = fine_tune_mode
         self.distance_metric = distance_metric
         self.n_jobs = n_jobs
         self.verbose = verbose
@@ -33,7 +35,9 @@ class FlairEmbeddingsClassifier(BaseEstimator):
 
         tag_docs = self._create_tag_corpus(X, self._create_tag_docs(y))
 
-        self.document_embedder_ = DocumentPoolEmbeddings(self.word_embeddings, pooling=self.pooling)
+        self.document_embedder_ = DocumentPoolEmbeddings(self.word_embeddings,
+                                                         pooling=self.pooling,
+                                                         fine_tune_mode=self.fine_tune_mode)
 
         if self.verbose:
             doc_iterator = tqdm(tag_docs, desc='Computing tag embeddings')
@@ -206,8 +210,8 @@ if __name__ == '__main__':
     df.keywords = df.keywords.apply(lambda x: x.split('|'))
     df.text = df.text.apply(lambda x: clean_string(x, drop_stopwords=True))
     df_train, df_test = train_test_split(df, test_size=0.2, random_state=42)
-    X_train = df_train.text.tolist()
-    X_test = df_test.text.tolist()
+    X_train = df_train.text.to_numpy()
+    X_test = df_test.text.to_numpy()
 
     mlb = MultiLabelBinarizer(sparse_output=True)
     y_train = mlb.fit_transform(df_train.keywords)
