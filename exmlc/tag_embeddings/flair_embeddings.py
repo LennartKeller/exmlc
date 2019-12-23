@@ -98,7 +98,11 @@ class FlairEmbeddingsClassifier(BaseEstimator):
         X_embeddings = []
 
         for doc in X_iterator:
-            doc_obj = Sentence(doc)
+            if doc:
+                doc_obj = Sentence(doc)
+            else:
+                doc_obj = Sentence('Unkown')
+                print('yeah')
             self.document_embedder_.embed(doc_obj)
             try:
                 X_embeddings.append(doc_obj.get_embedding().detach().numpy())
