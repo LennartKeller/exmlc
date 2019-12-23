@@ -9,14 +9,17 @@ from tqdm import tqdm
 from sklearn.exceptions import NotFittedError
 from sklearn.base import BaseEstimator
 from flair.data import Sentence
-from flair.embeddings import Embeddings, DocumentPoolEmbeddings, WordEmbeddings
+from flair.embeddings import Embeddings, DocumentPoolEmbeddings, WordEmbeddings, FlairEmbeddings
 from sklearn.neighbors import NearestNeighbors
 
 
 class FlairEmbeddingsClassifier(BaseEstimator):
 
     def __init__(self,
-                 word_embeddings: List[Embeddings] = (WordEmbeddings('de'), WordEmbeddings('de-crawl')),
+                 word_embeddings: List[Embeddings] = (WordEmbeddings('de'),
+                                                      WordEmbeddings('de-crawl'),
+                                                      FlairEmbeddings('de-forward'),
+                                                      FlairEmbeddings('de-backward')),
                  pooling: str = 'mean',
                  fine_tune_mode: str = 'nonlinear',
                  distance_metric: str = 'cosine',
