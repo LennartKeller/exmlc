@@ -211,6 +211,7 @@ if __name__ == '__main__':
     import pandas as pd
     from exmlc.preprocessing import clean_string
     from exmlc.metrics import sparse_average_precision_at_k
+    from exmlc.preprocessing import prune_labels
     df = pd.read_csv('~/ba_arbeit/BA_Code/data/Stiwa/df_5.csv').dropna(subset=['keywords', 'text'])
     #df, df_remove = train_test_split(df, test_size=0.9, random_state=42)
     df.keywords = df.keywords.apply(lambda x: x.split('|'))
@@ -220,6 +221,7 @@ if __name__ == '__main__':
     X_test = df_test.text.to_numpy()
 
     mlb = MultiLabelBinarizer(sparse_output=True)
+    y_train, y_test = prune_labels(y_train, y_test)
     y_train = mlb.fit_transform(df_train.keywords)
     y_test = mlb.transform(df_test.keywords)
 
