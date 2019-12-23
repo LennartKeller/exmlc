@@ -16,10 +16,7 @@ from sklearn.neighbors import NearestNeighbors
 class FlairEmbeddingsClassifier(BaseEstimator):
 
     def __init__(self,
-                 word_embeddings: List[Embeddings] = (WordEmbeddings('de'),
-                                                      WordEmbeddings('de-crawl'),
-                                                      FlairEmbeddings('de-forward'),
-                                                      FlairEmbeddings('de-backward')),
+                 word_embeddings: List[Embeddings] = (WordEmbeddings('de'), WordEmbeddings('de-crawl')),
                  pooling: str = 'mean',
                  fine_tune_mode: str = 'nonlinear',
                  distance_metric: str = 'cosine',
@@ -232,7 +229,7 @@ if __name__ == '__main__':
     y_train = mlb.fit_transform(df_train.keywords)
     y_test = mlb.transform(df_test.keywords)
 
-    clf = FlairEmbeddingsClassifier(verbose=True, n_jobs=4)
+    clf = FlairEmbeddingsClassifier(verbose=True, n_jobs=4, pooling='max')
 
     clf.fit(X_train, y_train)
     y_scores = clf.log_decision_function(X_test, n_labels=20)
