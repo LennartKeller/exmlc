@@ -225,7 +225,7 @@ if __name__ == '__main__':
     X_test = df_test.text.to_numpy()
 
     mlb = MultiLabelBinarizer(sparse_output=True)
-    y_train, y_test = prune_labels(y_train, y_test)
+    y_train, y_test, to_remove = prune_labels(y_train, y_test)
     y_train = mlb.fit_transform(df_train.keywords)
     y_test = mlb.transform(df_test.keywords)
 
