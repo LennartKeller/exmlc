@@ -13,7 +13,7 @@ from gensim.models.word2vec import Word2Vec
 from sklearn.exceptions import NotFittedError
 import logging
 from tqdm import tqdm
-
+from gensim.similarities.docsim import WmdSimilarity
 
 class Word2VecTagEmbeddingClassifier(BaseEstimator):
 
@@ -46,7 +46,8 @@ class Word2VecTagEmbeddingClassifier(BaseEstimator):
 
 
         if self.verbose:
-            logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
+            #logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
+            pass
 
         X_splitted = np.array([s.split() for s in X])
         #docs = [TaggedDocument(words=tokens, tags=[index]) for index, tokens in enumerate(X_splitted)]
@@ -200,9 +201,63 @@ class Word2VecTagEmbeddingClassifier(BaseEstimator):
 
         tag_doc_idx = list()
         for tag_vec in iterator:
+            t = tag_vec.nonzero()
             pos_samples = tag_vec.nonzero()[1]  # get indices of pos samples
             tag_doc_idx.append(pos_samples)
         return np.asarray(tag_doc_idx)
+
+
+    def wmd(self, X_train, y_train, X_test, n_labels: int = 10, n_ev: int = 2):
+        """
+        Compute docs similarity scores using the word mover distance (Kusner et. al, 2015)
+        Since this is computationally expensive because every docs from test set has to be compared to each doc
+        in train set the centroid optimatzion as described by Kusner et. al is used.
+        :param X_train:
+        :param X_test:
+        :return:
+        """
+
+        # Compute and store mean doc embedding for each doc in train-set
+        # => is done while fitting so we can use the self.tag_embeddings_ attribute
+        # For each sample in X_test
+        X_embeddings = []  # store mean doc embeddings for X_test
+        for x_sample in X_test:
+            x_sample = x_sample.split()
+            # Compute mean doc embedding for test doc
+            x_embeddings = []
+            for token in x_sample:
+                try:
+                    word_embedding = self.wv_model_.wv[token]
+                except KeyError:
+                    continue
+                x_embeddings.append(word_embedding)
+            X_embeddings.append(np.mean(x_embeddings, axis=0))
+
+        nn = NearestNeighbors(n_neighbors=n_labels * n_ev).fit(self.tag_embeddings_)
+
+        X_nearest_tags = nn.kneighbors(X_embeddings)[1]  # indices of most simiilar tag docs
+
+        # recompute tag docs
+        tag_doc_idx = self._create_tag_docs(y_train)
+        tag_docs = [[] for _ in range(len(tag_doc_idx))]
+        for doc_idx, entry in zip(tag_doc_idx, tag_docs):
+            for doc_id in doc_idx:
+                entry.extend(X_train[doc_id].split())
+
+        tag_docs = np.array(tag_docs)
+
+        results = []
+        if self.verbose:
+            iterator = tqdm(zip(X_nearest_tags, X_test), desc='Computing wdm distances')
+        else:
+            iterator = zip(X_nearest_tags, X_test)
+        for nereast_tag_doc_idx, x_sample in iterator:  # TODO fix typo in loop var
+            wmd = WmdSimilarity(tag_docs[nereast_tag_doc_idx], self.wv_model_, num_best=n_labels)
+            sim_mat = wmd[x_sample.split()]
+            results.append(sim_mat)
+
+        return results
+
 
 
 if __name__ == '__main__':
@@ -236,7 +291,7 @@ if __name__ == '__main__':
     from exmlc.preprocessing import clean_string
     from exmlc.metrics import sparse_average_precision_at_k
     df = pd.read_csv('~/ba_arbeit/BA_Code/data/Stiwa/df_5.csv').dropna(subset=['keywords', 'text'])
-    #df, df_remove = train_test_split(df, test_size=0.9, random_state=42)
+    df, df_remove = train_test_split(df, test_size=0.99, random_state=42)
     df.keywords = df.keywords.apply(lambda x: x.split('|'))
     df.text = df.text.apply(lambda x: clean_string(x, drop_stopwords=True))
     df_train, df_test = train_test_split(df, test_size=0.2, random_state=42)
@@ -257,6 +312,6 @@ if __name__ == '__main__':
                                          n_jobs=4)
 
     clf.fit(X_train, y_train)
-    y_scores = clf.log_decision_function(X_test, n_labels=10)
-
-    print(sparse_average_precision_at_k(y_test, y_scores, k=3))
+    #y_scores = clf.log_decision_function(X_test, n_labels=10)
+    m = clf.wmd(X_train, y_train, X_test)
+    #print(sparse_average_precision_at_k(y_test, y_scores, k=3))

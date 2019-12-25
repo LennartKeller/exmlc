@@ -276,6 +276,7 @@ class TagEmbeddingClassifier(BaseEstimator):
         return log_y_distances.tocsr()
 
 
+
 if __name__ == '__main__':  # used for debugging and testing ...
 
     X = np.array([
