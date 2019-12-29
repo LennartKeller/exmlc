@@ -296,6 +296,15 @@ class PLTClassifier(BaseEstimator):
 
         while fifo:
             current_node, prev_prob = fifo.popleft()
+
+            if current_node.is_invalid:
+                fifo.extendleft(
+                    (
+                        (children, pr) for children, pr in zip(current_node.get_children(), repeat(new_prev_prob))
+                    )
+                )
+                continue
+
             if use_probs:
                 prob = current_node.clf_predict_proba(x).ravel()[1].item()
             else:
