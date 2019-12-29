@@ -58,15 +58,27 @@ class HuffmanNode:
             self.fitted = True
         except ValueError as e:
             # TODO
-            self.is_invalid = True
-            warnings.warn(f'Could not fit node {self}.\n'
-                            f'This  either happens if there are labels in the dataset\n'
-                            f'which are never assigned to a instance or assigned to all instances.\n'
-                            f'Or while building the label tree labels were grouped\n'
-                            f'together which are together assigned to all instances\n'
-                            f'For the first case you could the prune_labels function to filter these labels.\n'
-                            f'For second case there is currently no built in solution.\n'
-                            f'Note: If you encounter this your dataset is very unlikely to at be at xmlc scale.\n')
+            if not self.is_leaf():
+                self.is_invalid = True
+                warnings.warn(f'Could not fit node {self}.\n'
+                                f'This  either happens if there are labels in the dataset\n'
+                                f'which are never assigned to a instance or assigned to all instances.\n'
+                                f'Or while building the label tree labels were grouped\n'
+                                f'together which are together assigned to all instances\n'
+                                f'For the first case you could the prune_labels function to filter these labels.\n'
+                                f'For second case there is currently no built in solution.\n'
+                                f'Note: If you encounter this your dataset is very unlikely to at be at xmlc scale.\n'
+                                f'This occurred during handling a non leaf node so training will be continued')
+            else:
+                raise Exception(f'Could not fit node {self}.\n'
+                                f'This  either happens if there are labels in the dataset\n'
+                                f'which are never assigned to a instance or assigned to all instances.\n'
+                                f'Or while building the label tree labels were grouped\n'
+                                f'together which are together assigned to all instances\n'
+                                f'For the first case you could the prune_labels function to filter these labels.\n'
+                                f'For second case there is currently no built in solution.\n'
+                                f'Note: If you encounter this your dataset is very unlikely to at be at xmlc scale.\n'
+                                f'This occurred during handling a leaf node.')
 
     def clf_predict_proba(self, X: Union[np.ndarray, csr_matrix]) -> np.ndarray:
         """
