@@ -4,6 +4,7 @@ from collections import deque
 from typing import *
 
 import numpy as np
+import warnings
 from scipy.sparse import csr_matrix
 from sklearn.linear_model.base import LinearClassifierMixin
 
@@ -36,6 +37,7 @@ class HuffmanNode:
         self.children = children
         self.fitted = False
         self.visited_while_prediction = 0
+        self.is_invalid = False
         if isinstance(clf, LinearClassifierMixin):
             self.clf = clf
         else:
@@ -56,7 +58,8 @@ class HuffmanNode:
             self.fitted = True
         except ValueError as e:
             # TODO
-            raise Exception(f'Could not fit node {self}.\n'
+            self.is_invalid = True
+            warnings.warn(f'Could not fit node {self}.\n'
                             f'This  either happens if there are labels in the dataset\n'
                             f'which are never assigned to a instance or assigned to all instances.\n'
                             f'Or while building the label tree labels were grouped\n'

@@ -1,5 +1,4 @@
 from __future__ import annotations
-
 from collections import deque
 from heapq import heappop, heapify, heappush
 from itertools import chain, repeat
@@ -249,6 +248,15 @@ class PLTClassifier(BaseEstimator):
         fifo.extendleft(((children, pr_prob) for children, pr_prob in zip(tree.root.get_children(), repeat(prev_prob))))
         while fifo:
             current_node, prev_prob = fifo.popleft()
+
+            if current_node.is_invalid:
+                fifo.extendleft(
+                    (
+                        (children, pr) for children, pr in zip(current_node.get_children(), repeat(new_prev_prob))
+                    )
+                )
+                continue
+
 
             if use_probs:
                 prob = current_node.clf_predict_proba(x).ravel()[1].item()
