@@ -47,6 +47,7 @@ class Word2VecTagEmbeddingClassifier(BaseEstimator):
 
         if self.verbose:
             #logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
+            # TODO revert this
             pass
 
         X_splitted = np.array([s.split() for s in X])
@@ -214,6 +215,9 @@ class Word2VecTagEmbeddingClassifier(BaseEstimator):
         in train set the centroid optimatzion as described by Kusner et. al is used.
         :param X_train:
         :param X_test:
+        :param n_labels: number of desired label to predict
+        :param n_ev: factor for size of search space
+        the search space for wdm which is precomputed will be of size n_labels * n_ev
         :return:
         """
 
@@ -247,17 +251,18 @@ class Word2VecTagEmbeddingClassifier(BaseEstimator):
         tag_docs = np.array(tag_docs)
 
         results = []
+        y_pred = lil_matrix((X_test.shape[0], y_train.shape[1]), dtype='int8')
         if self.verbose:
-            iterator = tqdm(zip(X_nearest_tags, X_test), desc='Computing wdm distances')
+            iterator = tqdm(enumerate(zip(X_nearest_tags, X_test)), desc='Computing wdm distances')
         else:
-            iterator = zip(X_nearest_tags, X_test)
-        for nereast_tag_doc_idx, x_sample in iterator:  # TODO fix typo in loop var
-            wmd = WmdSimilarity(tag_docs[nereast_tag_doc_idx], self.wv_model_, num_best=n_labels)
+            iterator = enumerate(zip(X_nearest_tags, X_test))
+        for sample_ind, (nearest_tag_doc_idx, x_sample) in iterator:  # TODO fix typo in loop var
+            wmd = WmdSimilarity(tag_docs[nearest_tag_doc_idx], self.wv_model_, num_best=n_labels)
             sim_mat = wmd[x_sample.split()]
-            results.append(sim_mat)
+            results.append(nearest_tag_doc_idx[[i[0] for i in sim_mat]])
+            y_pred[sample_ind, nearest_tag_doc_idx[[i[0] for i in sim_mat]]] = 1
 
-        return results
-
+        return y_pred
 
 
 if __name__ == '__main__':
@@ -295,8 +300,8 @@ if __name__ == '__main__':
     df.keywords = df.keywords.apply(lambda x: x.split('|'))
     df.text = df.text.apply(lambda x: clean_string(x, drop_stopwords=True))
     df_train, df_test = train_test_split(df, test_size=0.2, random_state=42)
-    X_train = df_train.text.tolist()
-    X_test = df_test.text.tolist()
+    X_train = df_train.text.to_numpy()
+    X_test = df_test.text.to_numpy()
 
     mlb = MultiLabelBinarizer(sparse_output=True)
     y_train = mlb.fit_transform(df_train.keywords)
@@ -313,5 +318,7 @@ if __name__ == '__main__':
 
     clf.fit(X_train, y_train)
     #y_scores = clf.log_decision_function(X_test, n_labels=10)
-    m = clf.wmd(X_train, y_train, X_test)
+    y_pred = clf.wmd(X_train, y_train, X_test)
     #print(sparse_average_precision_at_k(y_test, y_scores, k=3))
+    from sklearn.metrics import f1_score
+    print(f1_score(y_test, y_pred, average='macro'))
