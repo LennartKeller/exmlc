@@ -288,13 +288,21 @@ class PLTClassifier(BaseEstimator):
 
         while fifo:
             current_node, prev_prob = fifo.popleft()
+
+            if prev_prob < self.threshold:
+                continue
+
+            if current_node.is_leaf():
+                assert len(current_node.label_idx) == 1, Exception('Leaf node has more than one label associated.')
+                yi_pred.append(current_node.label_idx[0])
+                yi_prob.append(prob)
+
             if use_probs:
                 prob = current_node.clf_predict_proba(x).ravel()[1].item()
             else:
                 prob = current_node.clf_decision_function(x).item()  # use continuous values
 
-            if prob * prev_prob < self.threshold:
-                continue
+
 
             new_prev_prob = prob * prev_prob
             if not current_node.is_leaf():
