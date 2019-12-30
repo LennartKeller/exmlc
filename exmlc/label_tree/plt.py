@@ -347,7 +347,6 @@ class PLTClassifier(BaseEstimator):
                 #    continue
 
                 new_prev_prob = prob * prev_prob + alpha
-                print(prev_prob, prob, new_prev_prob)
                 if not current_node.is_leaf():
 
                     for children, pr in zip(current_node.get_children(), repeat(new_prev_prob)):
@@ -357,6 +356,8 @@ class PLTClassifier(BaseEstimator):
                     assert len(current_node.label_idx) == 1, Exception('Leaf node has more than one label associated.')
                     yi_pred.append(current_node.label_idx[0])
                     yi_prob.append(prob)
+                    print('Found label {len(yi_pred}/{k}')
+
 
             yi_vector = np.zeros(self.yi_shape_, dtype='float64')
             yi_vector[0, yi_pred] = yi_prob
