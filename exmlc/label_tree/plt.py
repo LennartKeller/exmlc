@@ -16,6 +16,8 @@ from sklearn.linear_model import SGDClassifier
 from sklearn.linear_model.base import LinearClassifierMixin
 from tqdm import tqdm
 
+from prioq.base import PriorityQueue
+
 from .tree import HuffmanNode, HuffmanTree
 from ..metrics import sparse_average_precision_at_k
 
@@ -312,6 +314,52 @@ class PLTClassifier(BaseEstimator):
         yi_vector = np.zeros(self.yi_shape_, dtype='float64')
         yi_vector[0, yi_pred] = yi_prob
         return yi_vector.ravel()
+
+    def top_k_labels(self, X: Union[np.ndarray, csr_matrix], k: int = 10) -> csr_matrix:
+        """
+        Returns the top k labels for each instance in X.
+        To achieve this the threshold is ignored and instead we use a priority queue to store the nodes while traversal
+        sorted by their prob. If have reached k labels we stop.
+        :param X: feature matrix of shape (n_samples, n_features)
+        :param k: number of labels to return
+        :return: sparse label matrix of shape (n_samples, n_labels) with their probs instead of binary indicators
+        """
+
+        y_scores = []
+
+        for x in X:
+            yi_pred = []
+            yi_prob = []
+
+            prev_prob = 1.0
+            values = ((children, pr_prob) for children, pr_prob in zip(self.tree_.root.get_children(), repeat(prev_prob)))
+            pq = PriorityQueue(*values, reverse=True, key=lambda entry: entry[0])
+
+            while pq or len(yi_pred) < k:
+                current_node, prev_prob = pq.pop()
+
+                prob = current_node.clf_predict_proba(x).ravel()[1].item()
+
+                #if prob * prev_prob < self.threshold:
+                #    continue
+
+                new_prev_prob = prob * prev_prob
+                if not current_node.is_leaf():
+
+                    for children, pr in zip(current_node.get_children(), repeat(new_prev_prob)):
+                        pq.push((children, pr))
+
+                if current_node.is_leaf():
+                    assert len(current_node.label_idx) == 1, Exception('Leaf node has more than one label associated.')
+                    yi_pred.append(current_node.label_idx[0])
+                    yi_prob.append(prob)
+
+            yi_vector = np.zeros(self.yi_shape_, dtype='float64')
+            yi_vector[0, yi_pred] = yi_prob
+            y_scores.append(yi_vector.ravel())
+
+        return csr_matrix(y_scores)
+
 
     def _compute_label_probabilities(self, y: Union[np.ndarray, csr_matrix]) -> Dict[int, float]:
         """
