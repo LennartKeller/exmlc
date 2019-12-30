@@ -339,7 +339,7 @@ class PLTClassifier(BaseEstimator):
             values = ((children, pr_prob) for children, pr_prob in zip(self.tree_.root.get_children(), repeat(prev_prob)))
             pq = PriorityQueue(*values, reverse=True, key=lambda entry: entry[0])
 
-            while pq or len(yi_pred) < k:
+            while pq and len(yi_pred) < k:
                 current_node, prev_prob = pq.pop()
 
                 prob = current_node.clf_predict_proba(x).ravel()[1].item()
