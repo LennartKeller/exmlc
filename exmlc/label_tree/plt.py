@@ -326,8 +326,12 @@ class PLTClassifier(BaseEstimator):
         """
 
         y_scores = []
+        if self.verbose:
+            iterator = tqdm(X, desc=f'Predicting top {k} labels.')
+        else:
+            iterator = X
 
-        for x in X:
+        for x in iterator:
             yi_pred = []
             yi_prob = []
 
