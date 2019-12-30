@@ -341,13 +341,13 @@ class PLTClassifier(BaseEstimator):
 
             while pq and len(yi_pred) < k:
                 current_node, prev_prob = pq.pop()
-
                 prob = current_node.clf_predict_proba(x).ravel()[1].item()
 
                 #if prob * prev_prob < self.threshold:
                 #    continue
 
                 new_prev_prob = prob * prev_prob
+                print(prev_prob, prob, new_prev_prob)
                 if not current_node.is_leaf():
 
                     for children, pr in zip(current_node.get_children(), repeat(new_prev_prob)):
