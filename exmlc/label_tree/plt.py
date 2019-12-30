@@ -315,7 +315,7 @@ class PLTClassifier(BaseEstimator):
         yi_vector[0, yi_pred] = yi_prob
         return yi_vector.ravel()
 
-    def top_k_labels(self, X: Union[np.ndarray, csr_matrix], k: int = 10) -> csr_matrix:
+    def top_k_labels(self, X: Union[np.ndarray, csr_matrix], k: int = 10, alpha: float = 1e-5) -> csr_matrix:
         """
         Returns the top k labels for each instance in X.
         To achieve this the threshold is ignored and instead we use a priority queue to store the nodes while traversal
@@ -346,7 +346,7 @@ class PLTClassifier(BaseEstimator):
                 #if prob * prev_prob < self.threshold:
                 #    continue
 
-                new_prev_prob = prob * prev_prob
+                new_prev_prob = prob * prev_prob + alpha
                 print(prev_prob, prob, new_prev_prob)
                 if not current_node.is_leaf():
 
