@@ -11,7 +11,8 @@ setup(
             'scikit-learn',
             'joblib',
             'stop_words',
-            'tqdm'
+            'tqdm',
+            'prioq'
       ],
       license='LICENSE'
 )
