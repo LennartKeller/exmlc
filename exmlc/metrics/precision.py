@@ -6,11 +6,11 @@ from .utils import top_n_idx_sparse
 
 def sparse_average_precision_at_k(y_true: csr_matrix, y_scores: csr_matrix, k: int = 5) -> float:
     """
-    TODO docs
-    :param y_true:
-    :param y_scores:
-    :param k:
-    :return:
+    Computes the average precision at k for sparse binary matrices.
+    :param y_true: grounded truth in binary format (n_samples, n_labels)
+    :param y_scores: predictions in respresentation that can be ranked (e.g. probabilities)
+    :param k: top k labels to check
+    :return: precision at k score
     """
     if y_true.shape != y_scores.shape:
         raise Exception('y_true and y_pred must have same shape')
