@@ -210,7 +210,7 @@ class OneVsAllLinearClf(BaseEstimator):
             y_pred_transposed[clf_index, np.nonzero(label_predictions)] = 1
         return y_pred_transposed.T.tocsr()
 
-    def predict_proba(self, X: Union[np.ndarray, csr_matrix]) -> np.ndarray:
+    def predict_proba(self, X: Union[np.ndarray, csr_matrix]) -> csr_matrix:
         """
         Acts mostly similar to the predict function but returns a label matrix
         containing the probability of each tag containing to the sample.
@@ -238,7 +238,7 @@ class OneVsAllLinearClf(BaseEstimator):
             # filter probs because we're only interested in the prob of the label
             y_pred.append([i[1] for i in label_probabilities])
 
-        return np.array(y_pred).T
+        return csr_matrix(np.array(y_pred).T)
 
     def decision_function(self, X: Union[csr_matrix, np.ndarray]) -> np.ndarray:
         """
