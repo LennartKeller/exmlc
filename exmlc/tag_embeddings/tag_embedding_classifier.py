@@ -184,7 +184,7 @@ class TagEmbeddingClassifier(BaseEstimator):
             tags = [self.doc2vec_model_.docvecs.index_to_doctag(i).item() for i in idx]
             idx_tags = list(zip(distances, tags))
             X_nearest_neighbors.append(idx_tags)
-        result = lil_matrix((X.shape[0], self.n_tags_), dtype='float64')
+        result = lil_matrix((len(X), self.n_tags_), dtype='float64')
         for sample_ind, entry in enumerate(X_nearest_neighbors):
             for tag_distance, tag_ind in entry:
                 result[sample_ind, tag_ind] = tag_distance
