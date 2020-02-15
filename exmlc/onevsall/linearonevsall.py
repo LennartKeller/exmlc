@@ -77,7 +77,7 @@ class OneVsAllLinearClf(BaseEstimator):
         :param n_jobs: Number of cores to use while training each classifier
         :param verbose: Whether or not to print information while training and prediction
         """
-        self.base_clf = clf
+        self.clf = clf
         self.sparsify = sparsify
 
         if n_jobs < 1:
@@ -108,7 +108,7 @@ class OneVsAllLinearClf(BaseEstimator):
             print(f'Init {y.shape[1]}classifiers')
 
         # allocate memory for clfs
-        self.clf_store_ = np.full((y.shape[1],), clone(self.base_clf), dtype=np.dtype(LinearClassifierMixin))
+        self.clf_store_ = np.full((y.shape[1],), clone(self.clf), dtype=np.dtype(LinearClassifierMixin))
 
         if self.n_jobs <= 1:  # sequential fitting
             for i in tqdm(range(self.clf_store_.shape[0])):
