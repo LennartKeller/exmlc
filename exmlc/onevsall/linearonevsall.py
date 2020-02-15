@@ -6,7 +6,7 @@ from typing import *
 import numpy as np
 from joblib import Parallel, delayed
 from scipy.sparse import csr_matrix, lil_matrix, issparse
-from sklearn.base import BaseEstimator
+from sklearn.base import BaseEstimator, clone
 from sklearn.exceptions import NotFittedError
 from sklearn.linear_model import SGDClassifier
 from sklearn.linear_model.base import LinearClassifierMixin
@@ -108,7 +108,7 @@ class OneVsAllLinearClf(BaseEstimator):
             print(f'Init {y.shape[1]}classifiers')
 
         # allocate memory for clfs
-        self.clf_store_ = np.full((y.shape[1],), self.base_clf, dtype=np.dtype(LinearClassifierMixin))
+        self.clf_store_ = np.full((y.shape[1],), clone(self.base_clf), dtype=np.dtype(LinearClassifierMixin))
 
         if self.n_jobs <= 1:  # sequential fitting
             for i in tqdm(range(self.clf_store_.shape[0])):
