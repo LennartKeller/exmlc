@@ -8,7 +8,7 @@ from scipy.sparse import csr_matrix, lil_matrix
 
 def load_fastxml_score_file(f: Union[str, TextIOWrapper]) -> csr_matrix:
     """
-    TODO
+    Loads an score file returned by fastxml. Unused
     :param f:
     :return:
     """
@@ -38,6 +38,9 @@ def dump_slice_dataset(X: csr_matrix,
                        y: csr_matrix,
                        feat_file: Union[str, TextIOWrapper],
                        label_file: Union[str, TextIOWrapper]) -> None:
+    """
+    Dumps scipy matrices into format for slice. Unused
+    """
     if isinstance(feat_file, str):
         feat_file = open(feat_file, 'w')
     elif isinstance(feat_file, TextIOWrapper):
@@ -92,7 +95,7 @@ def dump_slice_dataset(X: csr_matrix,
 
 def dump_xmlc_dataset(X: csr_matrix, y: csr_matrix, f: Union[str, TextIOWrapper]) -> None:
     """
-    TODO
+    Dumps python data into xmlc format. Unused
     The data files for all the datasets are in the following sparse representation format:
         Header Line: Total_Points Num_Features Num_Labels
         1 line per datapoint : label1,label2,...labelk ft1:ft1_val ft2:ft2_val ft3:ft3_val .. ftd:ftd_val
