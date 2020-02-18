@@ -11,7 +11,7 @@ def extreme_multilabel_classification_report(y_true: csr_matrix,
                                              y_score: csr_matrix,
                                              k_range: Iterable = range(1, 11)) -> dict:
     """
-    TODO docs
+    Unused function to get an overview over prediction results
     1. Precision at k
     2. DCG at k
     3. nDCG at k

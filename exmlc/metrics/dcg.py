@@ -9,7 +9,7 @@ def average_discounted_cumulative_gain_at_k(y_true: csr_matrix,
                                             k: int = 3,
                                             normalize: bool = False) -> float:  # -> Tuple[np.ndarray, List[float]]:
     """
-    TODO
+    unused implementation of the metric
     :param y_true:
     :param y_scores:
     :param k:
@@ -41,6 +41,10 @@ def average_discounted_cumulative_gain_at_k(y_true: csr_matrix,
 
 def discounted_culmulative_gain_at_k(y_true: csr_matrix, y_scores: csr_matrix, k: int = 3,
                                      normalize: bool = False) -> float:
+    """
+        unused implementation of the metric
+
+    """
     if normalize:
         raise NotImplementedError
 
@@ -59,6 +63,11 @@ def discounted_culmulative_gain_at_k(y_true: csr_matrix, y_scores: csr_matrix, k
 
 
 def avg_dcg_at_k(y_true: csr_matrix, y_scores: csr_matrix, k: int = 3, normalize: bool = False) -> float:
+
+    """
+        unused implementation of the metric
+
+    """
     if normalize:
         raise NotImplementedError
 
