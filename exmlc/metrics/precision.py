@@ -45,6 +45,10 @@ def sparse_average_precision_at_k(y_true: csr_matrix, y_scores: csr_matrix, k: i
 
 
 def precision_at_k(y_true: csr_matrix, y_scores: csr_matrix, k=3) -> float:
+    """
+    Another function to compute precision@k.
+    Just for testing purposes. It's unused for all experiments.
+    """
     if y_true.shape != y_scores.shape:
         raise Exception
 
