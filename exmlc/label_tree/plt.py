@@ -52,9 +52,9 @@ class PLTClassifier(BaseEstimator):
 
     def fit(self, X: Union[np.ndarray, csr_matrix], y: Union[np.ndarray, csr_matrix]) -> PLTClassifier:
         """
-        TODO
-        :param X:
-        :param y:
+        Fits the classifier
+        :param X: sparse feature matrix
+        :param y: sparse binary label matrix
         :return:
         """
 
@@ -67,9 +67,9 @@ class PLTClassifier(BaseEstimator):
 
     def predict(self, X: Union[np.ndarray, csr_matrix], use_probs: bool = None) -> csr_matrix:
         """
-        TODO
-        :param X:
-        :param use_probs:
+        predicts labels
+        :param X: sparse feature matrix
+        :param use_probs: experimental arg do not modify it
         :return:
         """
 
@@ -125,7 +125,7 @@ class PLTClassifier(BaseEstimator):
 
     def score(self, X_test: csr_matrix, y_test: csr_matrix, k: int = 3) -> float:
         """
-        TODO
+        predicts label scores for X_test and computes scores
         :param X_test:
         :param y_test:
         :param k:
@@ -237,7 +237,6 @@ class PLTClassifier(BaseEstimator):
         At each node the decision of whether continuing to the nodes children or this subtree is made.
         Therefore the nodes classifiers prediction is used as well as the prediction of the previous node.
         If leaf nodes are reached the corresponding labels are returned.
-        TODO finalize this as soon as possible
         :param tree: huffman label tree
         :param x: single instance of the data to predict
         :param use_probs:
@@ -280,6 +279,9 @@ class PLTClassifier(BaseEstimator):
         return yi_vector.astype('int8').ravel()
 
     def _traverse_tree_decision_function(self, tree: HuffmanTree, x: np.ndarray, use_probs: bool) -> np.ndarray:
+        """
+        Experimental do not use it
+        """
 
         yi_pred = []
         yi_prob = []
