@@ -22,7 +22,7 @@ from ..metrics import sparse_average_precision_at_k
 
 class PLTClassifier(BaseEstimator):
     """
-    TODO docs
+    Implementation of the Probabilistic Label Tree
     """
 
     def __init__(self,
@@ -98,9 +98,9 @@ class PLTClassifier(BaseEstimator):
 
     def decision_function(self, X: Union[np.ndarray, csr_matrix], use_probs: bool = None) -> csr_matrix:
         """
-        TODO
-        :param X:
-        :return:
+        Returns probabilities of the selected labels
+        :param X: feature matrix with samples to predict
+        :return: label matrix with probabilities instead of binary indicators.
         """
 
         if not hasattr(self, 'tree_'):
@@ -126,9 +126,9 @@ class PLTClassifier(BaseEstimator):
     def score(self, X_test: csr_matrix, y_test: csr_matrix, k: int = 3) -> float:
         """
         predicts label scores for X_test and computes scores
-        :param X_test:
-        :param y_test:
-        :param k:
+        :param X_test: feature matrix
+        :param y_test: ground truth label matrix
+        :param k: k value for average precision@k
         :return:
         """
 
@@ -176,10 +176,10 @@ class PLTClassifier(BaseEstimator):
 
     def _assign_train_indices(self, tree: HuffmanTree, y: csr_matrix) -> HuffmanTree:
         """
-
-        :param tree:
-        :param y:
-        :return:
+        Assings indices of train data to the nodes of the label tree.
+        :param tree: Label Tree
+        :param y: Label Matrix
+        :return: tree with data assigned
         """
 
         if self.verbose:
