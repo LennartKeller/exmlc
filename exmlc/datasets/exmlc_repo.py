@@ -134,6 +134,7 @@ def dump_xmlc_dataset(X: csr_matrix, y: csr_matrix, f: Union[str, TextIOWrapper]
 def load_xmlc_dataset(f: Union[str, TextIOWrapper]) -> Tuple[csr_matrix, csr_matrix]:
     """
     Loads a extreme multilabel classification dataset provided by http://manikvarma.org/downloads/XC/XMLRepository.html
+    Unused
     :param f: path to file as str or file like
     :return: X and y datasets in sparse representation
     """
